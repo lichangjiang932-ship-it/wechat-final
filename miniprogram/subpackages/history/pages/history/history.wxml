@@ -1,0 +1,57 @@
+<!-- 我的作品页面 -->
+<view class="page">
+  
+  <!-- 自定义导航栏组件 -->
+  <nav-bar 
+    title="我的作品"
+    show-back="{{true}}"
+  >
+    <view class="nav-count" wx:if="{{works.length > 0}}">
+      <text>{{works.length}}</text>
+    </view>
+  </nav-bar>
+
+  <!-- 内容区域 -->
+  <scroll-view
+    scroll-y
+    class="content"
+    style="padding-top: {{navBarHeight}}px;"
+    refresher-enabled
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+  >
+    <!-- 加载中 -->
+    <view class="loading-state" wx:if="{{loading && works.length === 0}}">
+      <view class="spinner rotate"></view>
+      <text>加载中...</text>
+    </view>
+
+    <!-- 空状态组件 -->
+    <empty-state 
+      wx:elif="{{empty}}"
+      icon="🎨"
+      title="暂无作品"
+      desc="去创作页开始你的第一张作品吧"
+      action-text="去创作"
+      bind:action="goCreate"
+    />
+
+    <!-- 作品列表 -->
+    <block wx:else>
+      <view class="works-grid">
+        <view class="work-item" wx:for="{{works}}" wx:key="id">
+          <image class="work-image" src="{{item.url}}" mode="aspectFill" lazy-load bindtap="onPreview" data-index="{{index}}"/>
+          <view class="work-info">
+            <text class="work-title">{{item.title || '作品'}}</text>
+            <text class="work-time">{{item.time}}</text>
+          </view>
+          <view class="work-actions">
+            <view class="action-btn" bindtap="onSave" data-item="{{item}}">保存</view>
+            <view class="action-btn danger" bindtap="onDelete" data-item="{{item}}">删除</view>
+          </view>
+        </view>
+      </view>
+      <view class="list-bottom">~ 共 {{works.length}} 个作品 ~</view>
+    </block>
+  </scroll-view>
+</view>

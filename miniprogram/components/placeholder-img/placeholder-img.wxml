@@ -1,0 +1,23 @@
+<!-- 图片占位组件 - 带加载动画 -->
+<view class="img-wrapper {{shape}}">
+  <!-- 占位背景 -->
+  <view class="placeholder" wx:if="{{!loaded}}">
+    <view class="shimmer"></view>
+  </view>
+  
+  <!-- 实际图片 -->
+  <image 
+    class="real-img {{loaded ? 'show' : 'hide'}}"
+    src="{{src}}" 
+    mode="{{mode}}"
+    lazy-load="{{lazyLoad}}"
+    bindload="onLoad"
+    binderror="onError"
+  />
+  
+  <!-- 错误状态 -->
+  <view class="error-state" wx:if="{{error}}">
+    <text class="error-icon">🖼️</text>
+    <text class="error-text">加载失败</text>
+  </view>
+</view>

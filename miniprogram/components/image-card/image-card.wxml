@@ -1,0 +1,36 @@
+<!-- 图片卡片组件 -->
+<view class="card {{size}}" bindtap="onTap">
+  <image 
+    class="card-img" 
+    src="{{src}}" 
+    mode="aspectFill" 
+    lazy-load
+    bindload="onLoad"
+    binderror="onError"
+  />
+  
+  <!-- 加载占位 -->
+  <view class="card-placeholder" wx:if="{{!loaded && !error}}">
+    <view class="placeholder-shimmer"></view>
+  </view>
+  
+  <!-- 错误占位 -->
+  <view class="card-error" wx:if="{{error}}">
+    <text class="error-icon">🖼️</text>
+    <text class="error-text">加载失败</text>
+  </view>
+  
+  <!-- 标签 -->
+  <view class="card-tag {{tagType}}" wx:if="{{tag}}">{{tag}}</view>
+  
+  <!-- 信息层 -->
+  <view class="card-info" wx:if="{{title}}">
+    <text class="card-title">{{title}}</text>
+    <text class="card-subtitle" wx:if="{{subtitle}}">{{subtitle}}</text>
+  </view>
+  
+  <!-- 操作按钮 -->
+  <view class="card-actions" wx:if="{{showActions}}">
+    <slot name="actions"></slot>
+  </view>
+</view>

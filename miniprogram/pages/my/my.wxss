@@ -1,0 +1,311 @@
+/* 我的 - 暖感真实风 */
+.page { background: var(--bg-page); min-height: 100vh; }
+
+/* 导航 */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  background: transparent; z-index: 100;
+  transition: background 0.3s;
+}
+.nav-inner { display: flex; align-items: center; justify-content: center; padding: 0 32rpx; height: 44px; }
+.nav-title { font-size: 36rpx; font-weight: 700; color: #fff; letter-spacing: 0.5rpx; text-shadow: 0 1rpx 8rpx rgba(0,0,0,0.12); }
+
+/* 头部背景 */
+.user-header {
+  position: relative;
+  height: 520rpx;
+}
+.user-bg {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 520rpx;
+  background: linear-gradient(160deg, #EBD8C6 0%, #D9C3AE 50%, #C8B09A 100%);
+  overflow: hidden;
+}
+.user-bg::after {
+  content: '';
+  position: absolute; top: -40rpx; right: -40rpx;
+  width: 320rpx; height: 320rpx;
+  background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.user-card {
+  position: absolute;
+  left: 24rpx;
+  right: 24rpx;
+  top: 75%;
+  transform: translateY(-100%);
+  padding: 40rpx 32rpx 40rpx;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  z-index: 1;
+  overflow: hidden;
+}
+.user-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 4rpx;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 60%, transparent 100%);
+}
+
+/* 头像按钮 */
+.avatar-btn {
+  width: 96rpx !important;
+  height: 96rpx !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  border: 3rpx solid #F5D4C1 !important;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.avatar-btn::after { border: none !important; }
+
+.user-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 3rpx solid #F5D4C1;
+}
+.avatar-empty {
+  opacity: 0.5;
+}
+
+/* 用户信息区域 */
+.user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.user-name { display: block; font-size: 32rpx; font-weight: 600; color: var(--text-primary); }
+.vip-badge {
+  display: inline-flex; align-items: center;
+  padding: 4rpx 14rpx; border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #D4A55E 0%, #C07830 100%);
+  font-size: 20rpx; color: #fff; margin-top: 8rpx;
+  box-shadow: 0 2rpx 8rpx rgba(180, 110, 40, 0.3);
+}
+
+/* 昵称输入框 */
+.nickname-wrap {
+  width: 100%;
+}
+.nickname-input {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #B0A090;
+  padding: 0;
+  width: 100%;
+  background: transparent;
+}
+.nickname-input.has-value {
+  color: var(--text-primary);
+}
+.nickname-placeholder {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #B0A090;
+}
+
+/* 登录按钮 */
+.wx-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 40rpx;
+  border-radius: var(--radius-full);
+  font-size: 28rpx;
+  font-weight: 500;
+  margin-top: 12rpx;
+  transition: all 0.2s;
+}
+.wx-login-btn.disabled {
+  background: #CCCCCC;
+  color: #FFFFFF;
+  box-shadow: none;
+}
+.wx-login-btn.active {
+  background: #07C160;
+  color: #FFFFFF;
+  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.25);
+}
+
+/* 操作提示 */
+.login-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12rpx;
+  padding: 8rpx 16rpx;
+}
+.tip-text {
+  font-size: 22rpx;
+  color: #B08860;
+}
+
+/* 统计 */
+.stats-row {
+  display: flex; margin: 24rpx 24rpx 16rpx; padding: 28rpx 16rpx;
+  background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+}
+.stat { flex: 1; text-align: center; }
+.stat-num {
+  display: block; font-size: 40rpx; font-weight: 700;
+  color: var(--text-primary); letter-spacing: -0.5rpx;
+}
+.stat-label { display: block; font-size: 22rpx; color: var(--text-hint); margin-top: 4rpx; }
+.stat-divider { width: 1rpx; background: var(--border-color); align-self: stretch; margin: 8rpx 0; }
+
+/* 菜单 */
+.menu-card {
+  margin: 16rpx 24rpx; background: var(--bg-card);
+  border-radius: var(--radius-lg); overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.menu-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 30rpx 24rpx; border-bottom: 1rpx solid var(--border-color);
+  transition: background 0.15s;
+}
+.menu-item:active { background: var(--bg-page); }
+.menu-item:last-child { border-bottom: none; }
+.menu-left { display: flex; align-items: center; gap: 16rpx; }
+.menu-icon {
+  width: 56rpx; height: 56rpx; border-radius: var(--radius-sm);
+  background: var(--primary-light); display: flex;
+  align-items: center; justify-content: center;
+  font-size: 28rpx;
+}
+.menu-name { font-size: 28rpx; color: var(--text-primary); font-weight: 500; }
+.menu-arrow { font-size: 22rpx; color: var(--text-hint); }
+
+/* 底部 */
+.footer {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 48rpx 0; gap: 4rpx;
+}
+.footer-text { font-size: 20rpx; color: var(--text-hint); }
+
+/* 未登录用户名 */
+.guest-name { color: var(--text-secondary); }
+
+/* 登录弹窗 */
+.login-mask {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4); z-index: 998;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.login-mask.show { opacity: 1; pointer-events: auto; }
+
+.login-popup {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bg-card);
+  border-radius: 32rpx 32rpx 0 0;
+  z-index: 999;
+  padding: 0 40rpx 40rpx;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.login-popup.show { transform: translateY(0); }
+
+.popup-handle {
+  width: 64rpx; height: 6rpx;
+  background: #E0E0E0;
+  border-radius: 3rpx;
+  margin: 16rpx auto 0;
+}
+
+.popup-content {
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 32rpx 0;
+}
+
+.popup-title {
+  display: block;
+  font-size: 36rpx; font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12rpx;
+}
+
+.popup-desc {
+  display: block;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  margin-bottom: 36rpx;
+}
+
+/* 头像按钮 */
+.popup-avatar-btn {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  width: 160rpx !important; height: 160rpx !important;
+  padding: 0 !important; margin: 0 0 24rpx 0 !important;
+  background: transparent !important;
+  border-radius: 50% !important;
+  position: relative;
+}
+.popup-avatar-btn::after { border: none !important; }
+
+.popup-avatar {
+  width: 140rpx; height: 140rpx;
+  border-radius: 50%;
+  border: 4rpx solid #F5D4C1;
+}
+
+.popup-avatar-tip {
+  position: absolute;
+  bottom: -8rpx;
+  font-size: 22rpx;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+/* 昵称输入 */
+.popup-input-wrap {
+  width: 100%;
+  margin-bottom: 32rpx;
+}
+
+.popup-input {
+  width: 100%;
+  height: 88rpx;
+  background: var(--bg-page);
+  border-radius: var(--radius-lg);
+  padding: 0 28rpx;
+  font-size: 28rpx;
+  color: var(--text-primary);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.popup-input-ph {
+  color: var(--text-hint);
+}
+
+/* 登录按钮 */
+.popup-login-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 92rpx;
+  background: #07C160;
+  color: #fff;
+  font-size: 32rpx; font-weight: 600;
+  border-radius: var(--radius-full);
+  box-shadow: 0 4rpx 16rpx rgba(7, 193, 96, 0.25);
+  margin-bottom: 20rpx;
+}
+
+.popup-login-btn:active {
+  transform: scale(0.98);
+}
+
+.popup-tips {
+  font-size: 22rpx;
+  color: var(--text-hint);
+}

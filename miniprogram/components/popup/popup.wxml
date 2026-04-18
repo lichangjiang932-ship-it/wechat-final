@@ -1,0 +1,18 @@
+<!-- 底部弹窗组件 -->
+<view class="popup-mask {{visible ? 'show' : ''}}" bindtap="onMaskTap" wx:if="{{mask}}"></view>
+<view class="popup-sheet {{visible ? 'show' : ''}}" style="max-height: {{maxHeight}};">
+  <view class="popup-handle" wx:if="{{showHandle}}"></view>
+  <view class="popup-header" wx:if="{{title}}">
+    <text class="popup-title">{{title}}</text>
+    <view class="popup-close" wx:if="{{showClose}}" bindtap="onClose">✕</view>
+  </view>
+  <scroll-view scroll-y class="popup-content" wx:if="{{scrollable}}">
+    <slot></slot>
+  </scroll-view>
+  <view class="popup-content" wx:else>
+    <slot></slot>
+  </view>
+  <view class="popup-footer safe-bottom" wx:if="{{showFooter}}">
+    <slot name="footer"></slot>
+  </view>
+</view>

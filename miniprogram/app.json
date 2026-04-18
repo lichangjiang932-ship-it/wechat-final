@@ -1,0 +1,52 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/create/create",
+    "pages/discover/discover",
+    "pages/my/my",
+    "pages/preview/preview",
+    "pages/settings/settings",
+    "pages/history/history",
+    "pages/favorites/favorites",
+    "pages/member/member"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationStyle": "custom",
+    "backgroundColor": "#F8F6F3"
+  },
+  "tabBar": {
+    "color": "#9A9288",
+    "selectedColor": "#C9956B",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "images/tab-home.png",
+        "selectedIconPath": "images/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/create/create",
+        "text": "创作",
+        "iconPath": "images/tab-create.png",
+        "selectedIconPath": "images/tab-create-active.png"
+      },
+      {
+        "pagePath": "pages/discover/discover",
+        "text": "发现",
+        "iconPath": "images/tab-discover.png",
+        "selectedIconPath": "images/tab-discover-active.png"
+      },
+      {
+        "pagePath": "pages/my/my",
+        "text": "我的",
+        "iconPath": "images/tab-my.png",
+        "selectedIconPath": "images/tab-my-active.png"
+      }
+    ]
+  },
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json"
+}

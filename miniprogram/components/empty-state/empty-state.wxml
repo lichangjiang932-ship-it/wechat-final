@@ -1,0 +1,13 @@
+<!-- 空状态组件 -->
+<view class="empty-wrapper">
+  <view class="empty-illustration">
+    <text class="empty-icon">{{icon}}</text>
+    <!-- 可选：自定义插画 -->
+    <slot name="illustration"></slot>
+  </view>
+  <text class="empty-title">{{title}}</text>
+  <text class="empty-desc" wx:if="{{desc}}">{{desc}}</text>
+  <view class="empty-action" wx:if="{{actionText}}" bindtap="onAction">
+    <text>{{actionText}}</text>
+  </view>
+</view>

@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "会员中心",
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/nav-bar"
+  }
+}

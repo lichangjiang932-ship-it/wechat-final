@@ -1,0 +1,163 @@
+<!-- 首页 - 自然文案·暖色调·真实感 -->
+<view class="page">
+
+  <!-- ========== 自定义导航栏 ========== -->
+  <view class="custom-nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content" style="min-height: {{menuBtnHeight}}px; margin-top: {{menuBtnTop - statusBarHeight}}px;">
+      <text class="nav-title">照片工坊</text>
+      <text class="nav-sub">让照片更有温度</text>
+    </view>
+  </view>
+
+  <!-- ========== 骨架屏 ========== -->
+  <block wx:if="{{skeletonVisible}}">
+    <view class="sk-banner skeleton"></view>
+    <view class="sk-cats">
+      <view class="sk-cat-item"><view class="sk-icon skeleton"></view><view class="sk-text skeleton" style="width:80rpx"></view></view>
+      <view class="sk-cat-item"><view class="sk-icon skeleton"></view><view class="sk-text skeleton" style="width:80rpx"></view></view>
+      <view class="sk-cat-item"><view class="sk-icon skeleton"></view><view class="sk-text skeleton" style="width:80rpx"></view></view>
+      <view class="sk-cat-item"><view class="sk-icon skeleton"></view><view class="sk-text skeleton" style="width:80rpx"></view></view>
+      <view class="sk-cat-item"><view class="sk-icon skeleton"></view><view class="sk-text skeleton" style="width:80rpx"></view></view>
+      <view class="sk-cat-item"><view class="sk-icon skeleton"></view><view class="sk-text skeleton" style="width:80rpx"></view></view>
+    </view>
+    <view class="sk-section"><view class="sk-title skeleton" style="width:200rpx;height:36rpx"></view></view>
+    <view class="sk-tpls">
+      <view class="sk-tpl skeleton"></view><view class="sk-tpl skeleton"></view><view class="sk-tpl skeleton"></view>
+    </view>
+  </block>
+
+  <!-- ========== 真实内容 ========== -->
+  <block wx:else>
+
+    <!-- 轮播 Banner -->
+    <view class="banner-wrap">
+      <swiper
+        class="banner-swiper"
+        indicator-dots
+        indicator-color="rgba(0,0,0,0.12)"
+        indicator-active-color="rgba(0,0,0,0.3)"
+        autoplay
+        circular
+        interval="4000"
+        duration="500"
+      >
+        <swiper-item wx:for="{{banners}}" wx:key="badge">
+          <view class="banner-slide bg-{{item.bg}} tap-scale" bindtap="onInspireTap" data-type="{{item.bg}}">
+            <text class="banner-emoji">{{item.emoji}}</text>
+            <view class="banner-badge">{{item.badge}}</view>
+            <text class="banner-title">{{item.title}}</text>
+            <text class="banner-desc">{{item.desc}}</text>
+            <view class="banner-btn">
+              <text>{{item.btnText}}</text>
+              <text class="banner-arrow">›</text>
+            </view>
+          </view>
+        </swiper-item>
+      </swiper>
+    </view>
+
+    <!-- 金刚区（6入口）-->
+    <view class="diamond-grid">
+      <view class="diamond-item tap-scale" wx:for="{{categories}}" wx:key="id"
+        bindtap="onCategoryTap" data-cat="{{item}}">
+        <view class="diamond-icon-wrap" style="background: {{item.bg}};">
+          <image class="diamond-icon-img" src="{{item.icon}}" mode="aspectFit"/>
+        </view>
+        <text class="diamond-name">{{item.name}}</text>
+      </view>
+    </view>
+
+    <!-- 热门模板（横向滑动） -->
+    <view class="section">
+      <view class="section-head">
+        <text class="section-title">大家都在用</text>
+        <text class="section-more" bindtap="goDiscover">全部</text>
+      </view>
+      <scroll-view scroll-x class="tpl-scroll" enhanced show-scrollbar="{{false}}" deceleration-rate="fast">
+        <view class="tpl-list">
+          <view class="tpl-card tap-scale" wx:for="{{hotTemplates}}" wx:key="id"
+            bindtap="onTemplateTap" data-tpl="{{item}}">
+            <!-- 封面图片 - 点击跳转到预览页 -->
+            <image class="tpl-cover-img" 
+                   src="{{item.cover}}" 
+                   mode="aspectFill"
+                   lazy-load
+                   catchtap="onImageTap"
+                   data-src="{{item.cover}}"
+                   data-title="{{item.name}}"/>
+            <!-- 标签 -->
+            <view class="tpl-tag tag-{{item.tagType}}" wx:if="{{item.tag}}">{{item.tag}}</view>
+            <!-- 信息 -->
+            <view class="tpl-info">
+              <text class="tpl-name">{{item.name}}</text>
+              <text class="tpl-uses">{{item.uses}}人用过</text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 灵感画廊（错层卡片） -->
+    <view class="section">
+      <view class="section-head">
+        <text class="section-title">换个风格试试</text>
+      </view>
+      <view class="inspire-grid">
+        <view class="inspire-large tap-scale">
+          <!-- 点击跳转到预览页 -->
+          <image class="inspire-bg" src="{{inspireImages.warm}}" mode="aspectFill" lazy-load catchtap="onImageTap" data-src="{{inspireImages.warm}}" data-title="胶片感日常"/>
+          <view class="inspire-overlay">
+            <text class="inspire-title">胶片感日常</text>
+            <text class="inspire-desc">温柔 · 怀旧 · 有故事</text>
+          </view>
+          <view class="make-same-btn" catchtap="onMakeSame" data-style="warm" data-cover="{{inspireImages.warm}}">做同款</view>
+        </view>
+        <view class="inspire-row">
+          <view class="inspire-small tap-scale">
+            <image class="inspire-bg-sm" src="{{inspireImages.cream}}" mode="aspectFill" catchtap="onImageTap" data-src="{{inspireImages.cream}}" data-title="清新"/>
+            <view class="inspire-overlay-sm">清新</view>
+            <view class="make-same-btn-sm" catchtap="onMakeSame" data-style="fantasy" data-cover="{{inspireImages.cream}}">做同款</view>
+          </view>
+          <view class="inspire-small tap-scale">
+            <image class="inspire-bg-sm" src="{{inspireImages.sage}}" mode="aspectFill" catchtap="onImageTap" data-src="{{inspireImages.sage}}" data-title="国风"/>
+            <view class="inspire-overlay-sm">国风</view>
+            <view class="make-same-btn-sm" catchtap="onMakeSame" data-style="chinese" data-cover="{{inspireImages.sage}}">做同款</view>
+          </view>
+        </view>
+        <view class="inspire-row">
+          <view class="inspire-small tap-scale">
+            <image class="inspire-bg-sm" src="{{inspireImages.sunset}}" mode="aspectFill" catchtap="onImageTap" data-src="{{inspireImages.sunset}}" data-title="暖调"/>
+            <view class="inspire-overlay-sm">暖调</view>
+            <view class="make-same-btn-sm" catchtap="onMakeSame" data-style="sunset" data-cover="{{inspireImages.sunset}}">做同款</view>
+          </view>
+          <view class="inspire-small tap-scale">
+            <image class="inspire-bg-sm" src="{{inspireImages.rose}}" mode="aspectFill" catchtap="onImageTap" data-src="{{inspireImages.rose}}" data-title="浪漫"/>
+            <view class="inspire-overlay-sm">浪漫</view>
+            <view class="make-same-btn-sm" catchtap="onMakeSame" data-style="cyber" data-cover="{{inspireImages.rose}}">做同款</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 社区精选 -->
+    <view class="section section-bottom">
+      <view class="section-head">
+        <text class="section-title">看看大家的作品</text>
+        <text class="section-more" bindtap="goDiscover">更多</text>
+      </view>
+      <view class="community-grid">
+        <view class="community-card tap-scale" wx:for="{{communityImages}}" wx:key="*this">
+          <image class="community-img" 
+                 src="{{item}}" 
+                 mode="aspectFill"
+                 lazy-load
+                 catchtap="onImageTap"
+                 data-src="{{item}}"
+                 data-title="社区作品"/>
+        </view>
+      </view>
+    </view>
+
+  </block>
+
+</view>

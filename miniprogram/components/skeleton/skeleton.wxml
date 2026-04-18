@@ -1,0 +1,55 @@
+<!-- 骨架屏组件 -->
+<view class="skeleton-wrapper" wx:if="{{loading}}">
+  <!-- 首页骨架 -->
+  <block wx:if="{{type === 'index'}}">
+    <view class="sk-banner skeleton"></view>
+    <view class="sk-cats">
+      <view class="sk-cat-item" wx:for="{{6}}" wx:key="*this">
+        <view class="sk-icon skeleton"></view>
+        <view class="sk-text skeleton" style="width:80rpx"></view>
+      </view>
+    </view>
+    <view class="sk-section"><view class="sk-title skeleton" style="width:200rpx;height:36rpx"></view></view>
+    <view class="sk-tpls">
+      <view class="sk-tpl skeleton" wx:for="{{3}}" wx:key="*this"></view>
+    </view>
+    <view class="sk-section"><view class="sk-title skeleton" style="width:200rpx;height:36rpx"></view></view>
+    <view class="sk-grid">
+      <view class="sk-grid-item skeleton" wx:for="{{6}}" wx:key="*this"></view>
+    </view>
+  </block>
+
+  <!-- 列表骨架 -->
+  <block wx:elif="{{type === 'list'}}">
+    <view class="sk-list">
+      <view class="sk-list-item" wx:for="{{count}}" wx:key="*this">
+        <view class="sk-img skeleton"></view>
+        <view class="sk-info">
+          <view class="sk-line skeleton" style="width:70%"></view>
+          <view class="sk-line skeleton" style="width:40%;margin-top:12rpx"></view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 详情骨架 -->
+  <block wx:elif="{{type === 'detail'}}">
+    <view class="sk-detail">
+      <view class="sk-detail-img skeleton"></view>
+      <view class="sk-detail-info">
+        <view class="sk-line skeleton" style="width:60%"></view>
+        <view class="sk-line skeleton" style="width:80%;margin-top:16rpx"></view>
+        <view class="sk-line skeleton" style="width:40%;margin-top:16rpx"></view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 自定义骨架 -->
+  <block wx:else>
+    <slot></slot>
+  </block>
+</view>
+
+<view wx:else>
+  <slot name="content"></slot>
+</view>

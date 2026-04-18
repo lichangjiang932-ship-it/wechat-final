@@ -1,0 +1,107 @@
+<!-- pages/my/my.wxml - 我的页面 -->
+<view class="page">
+
+  <!-- 导航 -->
+  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner" style="min-height: 44px;">
+      <text class="nav-title">我的</text>
+    </view>
+  </view>
+
+  <!-- 头部 -->
+  <view class="user-header" style="padding-top: {{navBarHeight}}px;">
+    <view class="user-bg"></view>
+    <view class="user-card">
+      <block wx:if="{{userInfo}}">
+        <!-- 已登录状态 -->
+        <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
+        <view class="user-info">
+          <text class="user-name">{{userInfo.nickName}}</text>
+          <view class="vip-badge" wx:if="{{isVip}}">会员</view>
+        </view>
+      </block>
+      <block wx:else>
+        <!-- 未登录状态 - 简化为一键登录 -->
+        <image class="user-avatar avatar-empty" src="/images/default-avatar.png" mode="aspectFill" />
+        <view class="user-info">
+          <text class="user-name guest-name">未登录</text>
+          <view class="wx-login-btn active" bindtap="onLoginTap">
+            <text>微信一键登录</text>
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 统计 -->
+  <view class="stats-row">
+    <view class="stat">
+      <text class="stat-num">{{stats.createCount}}</text>
+      <text class="stat-label">创作</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat">
+      <text class="stat-num">{{stats.favorites}}</text>
+      <text class="stat-label">收藏</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat">
+      <text class="stat-num">{{stats.shares}}</text>
+      <text class="stat-label">分享</text>
+    </view>
+  </view>
+
+  <!-- 菜单 -->
+  <view class="menu-card">
+    <view class="menu-item" wx:for="{{menuItems}}" wx:key="id"
+      bindtap="onMenuTap" data-id="{{item.id}}">
+      <view class="menu-left">
+        <view class="menu-icon">{{item.icon}}</view>
+        <text class="menu-name">{{item.name}}</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 底部 -->
+  <view class="footer safe-bottom">
+    <text class="footer-text">照片工坊 v1.0</text>
+  </view>
+
+  <!-- 登录弹窗 -->
+  <view class="login-mask {{showLoginPopup ? 'show' : ''}}" bindtap="closeLoginPopup"></view>
+  <view class="login-popup {{showLoginPopup ? 'show' : ''}}">
+    <view class="popup-handle" bindtap="closeLoginPopup"></view>
+    <view class="popup-content" catchtap="preventTap">
+      <text class="popup-title">微信登录</text>
+      <text class="popup-desc">授权头像和昵称，快速登录</text>
+
+      <!-- 头像选择 -->
+      <button class="popup-avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="popup-avatar" src="{{tempAvatar || '/images/default-avatar.png'}}" mode="aspectFill" />
+        <text class="popup-avatar-tip">{{tempAvatar ? '更换头像' : '选择头像'}}</text>
+      </button>
+
+      <!-- 昵称输入 -->
+      <view class="popup-input-wrap">
+        <input
+          type="nickname"
+          class="popup-input"
+          placeholder="点击输入昵称"
+          placeholder-class="popup-input-ph"
+          value="{{tempNickName}}"
+          bindinput="onNickNameInput"
+          bindconfirm="onNickNameConfirm"
+        />
+      </view>
+
+      <!-- 登录按钮 -->
+      <view class="popup-login-btn" bindtap="confirmLogin">
+        <text>确认登录</text>
+      </view>
+
+      <text class="popup-tips">点击头像选择 → 输入昵称 → 自动登录</text>
+    </view>
+  </view>
+
+</view>

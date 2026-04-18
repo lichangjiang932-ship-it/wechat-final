@@ -1,0 +1,113 @@
+<!-- 发现页 -->
+<view class="page">
+  
+  <!-- 自定义导航栏组件 -->
+  <nav-bar 
+    title="发现"
+    show-back="{{false}}"
+  />
+
+  <!-- 骨架屏 -->
+  <skeleton 
+    loading="{{loading}}" 
+    type="index"
+    style="padding-top: {{navBarHeight}}px;"
+  />
+
+  <!-- 真实内容 -->
+  <view wx:if="{{!loading}}" style="padding-top: {{navBarHeight}}px;">
+
+    <!-- 搜索栏 -->
+    <view class="search-bar" bindtap="toggleSearch">
+      <text class="search-icon">🔍</text>
+      <text class="search-placeholder">搜索灵感作品</text>
+    </view>
+
+    <!-- 分类标签 -->
+    <scroll-view scroll-x class="tab-scroll" enhanced show-scrollbar="{{false}}">
+      <view class="tab-list">
+        <view class="tab-item {{activeTab === item ? 'active' : ''}}" 
+              wx:for="{{tabs}}" wx:key="*this"
+              bindtap="switchTab" data-tab="{{item}}">
+          {{item}}
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 瀑布流列表 -->
+    <view class="waterfall">
+      <view class="waterfall-col">
+        <view class="waterfall-item tap-scale" wx:for="{{leftCol}}" wx:key="id"
+              bindtap="onImageTap" data-item="{{item}}">
+          <image class="waterfall-img" src="{{item.cover}}" mode="aspectFill" lazy-load />
+          <view class="waterfall-info">
+            <text class="waterfall-title">{{item.title}}</text>
+            <view class="waterfall-bottom">
+              <text class="waterfall-likes">❤️ {{item.likes}}</text>
+              <view class="waterfall-fav {{item.isFavorited ? 'active' : ''}}" 
+                    catchtap="onToggleFavorite" data-item="{{item}}">
+                {{item.isFavorited ? '❤️' : '🤍'}}
+              </view>
+            </view>
+          </view>
+          <view class="waterfall-action" catchtap="onMakeSame" data-item="{{item}}">
+            <text>做同款</text>
+          </view>
+        </view>
+      </view>
+      <view class="waterfall-col">
+        <view class="waterfall-item tap-scale" wx:for="{{rightCol}}" wx:key="id"
+              bindtap="onImageTap" data-item="{{item}}">
+          <image class="waterfall-img" src="{{item.cover}}" mode="aspectFill" lazy-load />
+          <view class="waterfall-info">
+            <text class="waterfall-title">{{item.title}}</text>
+            <view class="waterfall-bottom">
+              <text class="waterfall-likes">❤️ {{item.likes}}</text>
+              <view class="waterfall-fav {{item.isFavorited ? 'active' : ''}}" 
+                    catchtap="onToggleFavorite" data-item="{{item}}">
+                {{item.isFavorited ? '❤️' : '🤍'}}
+              </view>
+            </view>
+          </view>
+          <view class="waterfall-action" catchtap="onMakeSame" data-item="{{item}}">
+            <text>做同款</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{loading}}">
+      <view class="spinner-small"></view>
+      <text>加载中...</text>
+    </view>
+
+  </view>
+
+  <!-- 搜索弹窗 -->
+  <view class="search-popup {{showSearch ? 'show' : ''}}">
+    <view class="search-popup-header">
+      <input class="search-input" 
+             placeholder="搜索作品" 
+             value="{{searchKeyword}}"
+             focus="{{searchFocus}}"
+             bindinput="onSearchInput"
+             bindconfirm="onSearchConfirm" />
+      <text class="search-cancel" bindtap="toggleSearch">取消</text>
+    </view>
+    <scroll-view scroll-y class="search-results" wx:if="{{searchResults.length > 0}}">
+      <view class="search-item" wx:for="{{searchResults}}" wx:key="id"
+            bindtap="onSearchResultTap" data-item="{{item}}">
+        <image class="search-item-img" src="{{item.cover}}" mode="aspectFill" />
+        <view class="search-item-info">
+          <text class="search-item-title">{{item.title}}</text>
+          <text class="search-item-likes">❤️ {{item.likes}}</text>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="search-empty" wx:elif="{{searchKeyword && searchResults.length === 0}}">
+      <text>没有找到相关作品</text>
+    </view>
+  </view>
+
+</view>

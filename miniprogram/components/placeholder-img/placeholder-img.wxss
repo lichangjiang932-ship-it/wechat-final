@@ -1,0 +1,77 @@
+.img-wrapper {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-page);
+}
+
+/* 形状 */
+.img-wrapper.rounded {
+  border-radius: var(--radius-lg);
+}
+
+.img-wrapper.circle {
+  border-radius: 50%;
+}
+
+/* 占位 */
+.placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    var(--bg-page) 0%,
+    var(--border-color) 50%,
+    var(--bg-page) 100%
+  );
+  background-size: 400% 400%;
+  animation: shimmer 1.5s ease infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  50% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* 图片 */
+.real-img {
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.3s ease;
+}
+
+.real-img.hide {
+  opacity: 0;
+}
+
+.real-img.show {
+  opacity: 1;
+}
+
+/* 错误状态 */
+.error-state {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-page);
+  gap: 8rpx;
+}
+
+.error-icon {
+  font-size: 48rpx;
+  opacity: 0.4;
+}
+
+.error-text {
+  font-size: 22rpx;
+  color: var(--text-hint);
+}

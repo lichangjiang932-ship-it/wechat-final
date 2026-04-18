@@ -1,0 +1,209 @@
+<!-- 创作页 - 暖感真实风 -->
+<view class="page">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner" style="min-height: 44px;">
+      <text class="nav-title">{{templateName || '创作'}}</text>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="content" style="padding-top: calc({{navBarHeight}}px + 16rpx);">
+
+    <!-- 模式切换 -->
+    <view class="mode-bar">
+      <view class="mode-item {{activeMode === 'text2img' ? 'active' : ''}}"
+        bindtap="switchMode" data-mode="text2img">描述画面</view>
+      <view class="mode-item {{activeMode === 'img2img' ? 'active' : ''}}"
+        bindtap="switchMode" data-mode="img2img">上传照片</view>
+    </view>
+
+    <!-- 文生图 -->
+    <block wx:if="{{activeMode === 'text2img'}}">
+      <view class="card input-card">
+        <textarea class="prompt-input" placeholder="比如：一只橘猫趴在窗台上晒太阳，阳光洒在它身上..."
+          placeholder-class="prompt-ph" value="{{prompt}}" bindinput="onPromptInput"
+          maxlength="500" auto-height />
+        <view class="prompt-footer"><text class="char-count">{{prompt.length}}/500</text></view>
+      </view>
+
+      <view class="quick-row">
+        <text class="quick-label">试试看</text>
+        <scroll-view scroll-x enhanced show-scrollbar="{{false}}" class="quick-scroll">
+          <view class="quick-list">
+            <view class="quick-chip" wx:for="{{quickPrompts}}" wx:key="*this"
+              bindtap="onQuickPrompt" data-p="{{item}}">{{item}}</view>
+          </view>
+        </scroll-view>
+      </view>
+    </block>
+
+    <!-- 图生图 -->
+    <block wx:if="{{activeMode === 'img2img'}}">
+      <view class="upload-area" bindtap="chooseImage">
+        <block wx:if="{{sourceImage}}">
+          <image src="{{sourceImage}}" mode="aspectFit" class="preview-img" />
+          <view class="upload-overlay">换一张</view>
+        </block>
+        <block wx:else>
+          <text class="upload-plus">+</text>
+          <text class="upload-hint">添加参考照片</text>
+          <text class="upload-sub">JPG / PNG</text>
+        </block>
+      </view>
+
+      <view class="card input-card" wx:if="{{sourceImage}}">
+        <textarea class="prompt-input" placeholder="告诉AI你想要什么变化，比如：变成油画风格..."
+          placeholder-class="prompt-ph" value="{{prompt}}" bindinput="onPromptInput"
+          maxlength="500" auto-height />
+        <view class="prompt-footer"><text class="char-count">{{prompt.length}}/500</text></view>
+      </view>
+    </block>
+
+    <!-- 风格选择 -->
+    <view class="style-section">
+      <text class="style-label">风格</text>
+      <view class="style-grid">
+        <view class="style-item {{selectedStyleId === item.id ? 'active' : ''}}"
+          wx:for="{{styles}}" wx:key="id"
+          bindtap="selectStyle" data-id="{{item.id}}">
+          <text class="style-dot" style="background: {{item.color}};"></text>
+          <text class="style-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 画幅 -->
+    <view class="ratio-section">
+      <text class="style-label">比例</text>
+      <view class="ratio-list">
+        <view class="ratio-item {{selectedRatio === item.value ? 'active' : ''}}"
+          wx:for="{{ratios}}" wx:key="value"
+          bindtap="selectRatio" data-value="{{item.value}}">
+          <view class="ratio-box ratio-{{item.value}}"></view>
+          <text class="ratio-name">{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 用量 -->
+    <view class="usage-row" wx:if="{{usageInfo}}">
+      <text wx:if="{{usageInfo.isVip}}" class="usage-text">会员 · 不限次数</text>
+      <text wx:else class="usage-text">今天还能用 {{usageInfo.limit - usageInfo.used}} 次 · <text class="link" bindtap="openPayPopup">开通会员</text></text>
+    </view>
+
+    <!-- 按钮 -->
+    <view class="btn-area safe-bottom">
+      <view class="btn-primary" wx:if="{{phase === 'idle'}}" bindtap="generate">
+        <text>开始生成</text>
+      </view>
+      <view class="btn-loading-wrap" wx:elif="{{phase === 'uploading' || phase === 'generating'}}">
+        <view class="btn-primary btn-loading">
+          <view class="spinner rotate"></view>
+          <text>{{progressText || '在画了...'}}</text>
+        </view>
+        <view class="progress-bar-wrap">
+          <view class="progress-bar-track">
+            <view class="progress-bar-fill" style="width: {{progress}}%;"></view>
+          </view>
+          <text class="progress-pct">{{progress}}%</text>
+        </view>
+      </view>
+      <view class="btn-retry-area" wx:elif="{{phase === 'done'}}">
+        <view class="btn-secondary tap-light" bindtap="retryGenerate">
+          <text>再来一张</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 结果 -->
+    <view class="result-area safe-bottom" wx:if="{{resultImage}}">
+      <view class="result-head">
+        <text class="result-label">生成结果</text>
+        <view class="result-btns">
+          <view class="btn-sm tap-light" bindtap="previewResult">预览</view>
+          <view class="btn-sm tap-light" bindtap="onShareTap">分享</view>
+          <view class="btn-sm btn-sm-fill tap-light" bindtap="saveImage">保存</view>
+        </view>
+      </view>
+      <image src="{{resultImage}}" mode="widthFix" class="result-img"
+        show-menu-by-longpress binderror="onImageError" />
+
+      <!-- Skill Enhancer: 触发技能徽章 + 查看提示词 -->
+      <view class="skill-info-bar" wx:if="{{enhancedPrompt}}">
+        <view class="skill-badge" wx:if="{{skillName}}">
+          <text class="skill-badge-icon">✦</text>
+          <text class="skill-badge-text">{{skillName}}</text>
+        </view>
+        <view class="enhanced-toggle" bindtap="toggleEnhancedPrompt">
+          <text>{{showEnhancedPrompt ? '收起提示词 ↑' : '查看优化提示词 ↓'}}</text>
+        </view>
+      </view>
+
+      <!-- 展开显示增强后的提示词 -->
+      <view class="enhanced-prompt-box" wx:if="{{enhancedPrompt && showEnhancedPrompt}}">
+        <text class="enhanced-prompt-label">Skill 增强后的提示词</text>
+        <text class="enhanced-prompt-text" user-select>{{enhancedPrompt}}</text>
+      </view>
+    </view>
+
+    <!-- 历史记录 -->
+    <view class="history-area safe-bottom" wx:if="{{results.length > 1}}">
+      <scroll-view scroll-x enhanced show-scrollbar="{{false}}">
+        <view class="history-list">
+          <view class="history-thumb" wx:for="{{results}}" wx:key="time" wx:if="{{index > 0}}"
+            bindtap="previewHistory" data-url="{{item.url}}">
+            <image src="{{item.url}}" mode="aspectFill" class="thumb-img" lazy-load />
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+  </scroll-view>
+
+  <!-- 会员弹窗 -->
+  <view class="popup-mask {{showPayPopup ? '' : 'hidden'}}" bindtap="closePayPopup"></view>
+  <view class="popup-sheet {{showPayPopup ? 'show' : ''}}">
+    <view class="popup-handle"></view>
+    <text class="popup-title">会员</text>
+    <view class="plan-list">
+      <view class="plan {{selectedVipPlan === 'month' ? 'active' : ''}}" bindtap="selectVipPlan" data-plan="month">
+        <text class="plan-name">月卡</text>
+        <text class="plan-price">¥19.9</text>
+        <text class="plan-unit">/月</text>
+      </view>
+      <view class="plan {{selectedVipPlan === 'year' ? 'active' : ''}}" bindtap="selectVipPlan" data-plan="year">
+        <text class="plan-name">年卡</text>
+        <text class="plan-price">¥199</text>
+        <text class="plan-unit">/年</text>
+        <text class="plan-save">省5折</text>
+      </view>
+    </view>
+    <view class="perks">
+      <text>· 不限次数</text>
+      <text>· 所有风格</text>
+      <text>· 优先生成</text>
+    </view>
+    <view class="popup-btn safe-bottom">
+      <view class="btn-primary" bindtap="closePayPopup"><text>开通</text></view>
+    </view>
+  </view>
+
+  <!-- 分享菜单弹窗 -->
+  <view class="popup-mask {{showShareMenu ? '' : 'hidden'}}" bindtap="closeShareMenu"></view>
+  <view class="popup-sheet share-popup {{showShareMenu ? 'show' : ''}}">
+    <view class="popup-handle"></view>
+    <text class="popup-title">分享作品</text>
+    <view class="share-options">
+      <button class="share-btn" open-type="share" bindtap="closeShareMenu">
+        <view class="share-icon">💬</view>
+        <text class="share-name">发给好友</text>
+      </button>
+      <view class="share-btn" bindtap="onSavePoster">
+        <view class="share-icon">🖼️</view>
+        <text class="share-name">保存海报</text>
+      </view>
+    </view>
+  </view>
+
+</view>

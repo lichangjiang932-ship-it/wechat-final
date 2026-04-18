@@ -1,0 +1,140 @@
+// cloudfunctions/tools/index.js - 工具配置查询 + 作品/收藏云端同步
+const cloud = require('wx-server-sdk');
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
+const db = cloud.database();
+const _ = db.command;
+
+// 默认工具配置
+const DEFAULT_TOOLS = [
+  { id: 'enhance', name: '画质提升', icon: '✨', desc: '提升图片分辨率和清晰度', btnText: '开始提升' },
+  { id: 'colorize', name: '线稿上色', icon: '🎨', desc: '给黑白线稿自动上色', btnText: '开始上色' },
+  { id: 'style', name: '风格迁移', icon: '🖼️', desc: '将照片转换为不同艺术风格', btnText: '开始转换' },
+  { id: 'critique', name: '作品点评', icon: '💡', desc: 'AI分析作品优缺点', btnText: '开始点评', isText: true },
+  { id: 'extract', name: '线条提取', icon: '✏️', desc: '从照片中提取线条', btnText: '开始提取' },
+  { id: 'palette', name: '配色推荐', icon: '🌈', desc: '分析图片色彩构成', btnText: '开始分析', isText: true },
+];
+
+exports.main = async (event, context) => {
+  const { action } = event;
+  const wxContext = cloud.getWXContext();
+  const openid = wxContext.OPENID;
+
+  switch (action) {
+    case 'list':
+      return await listTools();
+    // ===== 我的作品云端同步 =====
+    case 'saveWork':
+      return await saveWork(openid, event.work);
+    case 'getWorks':
+      return await getWorks(openid, event.limit || 100);
+    case 'deleteWork':
+      return await deleteWork(openid, event.workId);
+    // ===== 我的收藏云端同步 =====
+    case 'saveFavorite':
+      return await saveFavorite(openid, event.item);
+    case 'getFavorites':
+      return await getFavorites(openid);
+    case 'removeFavorite':
+      return await removeFavorite(openid, event.itemId);
+    default:
+      return { code: -1, msg: '未知操作' };
+  }
+};
+
+// 工具列表
+async function listTools() {
+  try {
+    const res = await db.collection('tools').orderBy('sort', 'asc').get();
+    if (res.data && res.data.length > 0) return { code: 0, data: res.data };
+    return { code: 0, data: DEFAULT_TOOLS };
+  } catch (e) {
+    return { code: 0, data: DEFAULT_TOOLS };
+  }
+}
+
+// ===== 我的作品 =====
+async function saveWork(openid, work) {
+  if (!openid) return { code: -1, msg: '未登录' };
+  if (!work || !work.url) return { code: -1, msg: '作品数据无效' };
+
+  try {
+    const data = {
+      openid,
+      fileID: work.fileID || '',
+      url: work.fileID || work.url,
+      title: work.title || 'AI作品',
+      prompt: work.prompt || '',
+      style: work.style || '',
+      createTime: work.id || Date.now(),
+    };
+    const res = await db.collection('my_works').add({ data });
+    return { code: 0, data: { id: res._id, msg: '保存成功' } };
+  } catch (e) {
+    console.error('saveWork error:', e);
+    return { code: -1, msg: '保存失败' };
+  }
+}
+
+async function getWorks(openid, limit = 100) {
+  if (!openid) return { code: -1, msg: '未登录' };
+  try {
+    const res = await db.collection('my_works').where({ openid }).orderBy('createTime', 'desc').limit(limit).get();
+    return { code: 0, data: res.data };
+  } catch (e) {
+    return { code: 0, data: [] };
+  }
+}
+
+async function deleteWork(openid, workId) {
+  if (!openid || !workId) return { code: -1, msg: '参数错误' };
+  try {
+    await db.collection('my_works').doc(workId).remove();
+    return { code: 0, msg: '删除成功' };
+  } catch (e) {
+    return { code: -1, msg: '删除失败' };
+  }
+}
+
+// ===== 我的收藏 =====
+async function saveFavorite(openid, item) {
+  if (!openid) return { code: -1, msg: '未登录' };
+  if (!item || !item.id) return { code: -1, msg: '收藏数据无效' };
+
+  try {
+    const exist = await db.collection('my_favorites').where({ openid, itemId: item.id }).count();
+    if (exist.total > 0) return { code: 0, data: { msg: '已收藏' } };
+
+    const data = {
+      openid,
+      itemId: item.id,
+      title: item.title || '',
+      cover: item.cover || item.url || '',
+      likes: item.likes || 0,
+      createTime: Date.now(),
+    };
+    await db.collection('my_favorites').add({ data });
+    return { code: 0, data: { msg: '收藏成功' } };
+  } catch (e) {
+    return { code: -1, msg: '收藏失败' };
+  }
+}
+
+async function getFavorites(openid) {
+  if (!openid) return { code: -1, msg: '未登录' };
+  try {
+    const res = await db.collection('my_favorites').where({ openid }).orderBy('createTime', 'desc').get();
+    return { code: 0, data: res.data };
+  } catch (e) {
+    return { code: 0, data: [] };
+  }
+}
+
+async function removeFavorite(openid, itemId) {
+  if (!openid || !itemId) return { code: -1, msg: '参数错误' };
+  try {
+    await db.collection('my_favorites').where({ openid, itemId }).remove();
+    return { code: 0, msg: '取消收藏成功' };
+  } catch (e) {
+    return { code: -1, msg: '取消收藏失败' };
+  }
+}

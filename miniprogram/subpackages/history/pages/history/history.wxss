@@ -1,0 +1,43 @@
+/* 我的作品页面 */
+.page { background: var(--bg-page); min-height: 100vh; }
+
+/* 导航栏 */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  background: var(--bg-card); z-index: 100;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+.nav-inner { display: flex; align-items: center; height: 88rpx; padding: 0 24rpx; }
+.nav-back { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; }
+.back-icon { font-size: 48rpx; color: var(--text-primary); font-weight: 300; }
+.nav-title { flex: 1; text-align: center; font-size: 32rpx; font-weight: 600; color: var(--text-primary); }
+.nav-count { position: absolute; right: 32rpx; font-size: 24rpx; color: var(--text-hint); }
+
+/* 内容 */
+.content { padding: 0 24rpx 24rpx; min-height: 100vh; }
+
+/* 加载状态 */
+.loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 160rpx 60rpx; }
+.spinner { width: 48rpx; height: 48rpx; border: 4rpx solid var(--border-color); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16rpx; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 空状态 */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 160rpx 60rpx; }
+.empty-icon { font-size: 120rpx; opacity: 0.3; }
+.empty-title { display: block; margin-top: 32rpx; font-size: 32rpx; font-weight: 600; color: var(--text-primary); }
+.empty-desc { display: block; margin-top: 16rpx; font-size: 26rpx; color: var(--text-hint); }
+.empty-btn { margin-top: 48rpx; padding: 24rpx 64rpx; background: var(--primary); color: #fff; border-radius: var(--radius-full); font-size: 28rpx; font-weight: 500; }
+
+/* 作品列表 */
+.works-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20rpx; padding-top: 16rpx; }
+.work-item { background: var(--bg-card); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+.work-image { width: 100%; aspect-ratio: 1; }
+.work-info { padding: 16rpx; }
+.work-title { display: block; font-size: 26rpx; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.work-time { display: block; font-size: 22rpx; color: var(--text-hint); margin-top: 4rpx; }
+.work-actions { display: flex; padding: 0 16rpx 16rpx; gap: 12rpx; }
+.action-btn { flex: 1; text-align: center; padding: 12rpx 0; background: var(--bg-page); border-radius: var(--radius-md); font-size: 22rpx; color: var(--text-secondary); }
+.action-btn.danger { color: var(--accent); }
+
+/* 底部 */
+.list-bottom { text-align: center; padding: 32rpx 0; font-size: 22rpx; color: var(--text-hint); }

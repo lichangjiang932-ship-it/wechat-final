@@ -1,0 +1,152 @@
+.card {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+  transform: translateZ(0);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:active {
+  transform: scale(0.97);
+  box-shadow: var(--shadow-xs);
+}
+
+/* 尺寸 */
+.card.small {
+  width: 200rpx;
+  height: 260rpx;
+}
+
+.card.medium {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+}
+
+.card.large {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.card.banner {
+  width: 100%;
+  height: 280rpx;
+}
+
+.card-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 占位 */
+.card-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-page);
+}
+
+.placeholder-shimmer {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--bg-page) 25%,
+    var(--border-color) 50%,
+    var(--bg-page) 75%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.5s ease infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 错误 */
+.card-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-page);
+  gap: 8rpx;
+}
+
+.error-icon {
+  font-size: 48rpx;
+  opacity: 0.4;
+}
+
+.error-text {
+  font-size: 22rpx;
+  color: var(--text-hint);
+}
+
+/* 标签 */
+.card-tag {
+  position: absolute;
+  top: 12rpx;
+  left: 12rpx;
+  padding: 4rpx 14rpx;
+  border-radius: var(--radius-full);
+  font-size: 18rpx;
+  font-weight: 600;
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+
+.card-tag.hot {
+  background: rgba(201, 149, 107, 0.85);
+}
+
+.card-tag.new {
+  background: rgba(212, 135, 110, 0.85);
+}
+
+.card-tag.vip {
+  background: linear-gradient(135deg, #D4A55E 0%, #C07830 100%);
+}
+
+/* 信息层 */
+.card-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 48rpx 16rpx 16rpx;
+  background: linear-gradient(to top, rgba(30, 20, 10, 0.72) 0%, transparent 100%);
+}
+
+.card-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.5rpx;
+}
+
+.card-subtitle {
+  display: block;
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.72);
+  margin-top: 4rpx;
+}
+
+/* 操作区 */
+.card-actions {
+  position: absolute;
+  bottom: 12rpx;
+  right: 12rpx;
+  z-index: 2;
+}

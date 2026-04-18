@@ -1,0 +1,77 @@
+<!-- 会员页面 -->
+<view class="page">
+  
+  <!-- 自定义导航栏组件 -->
+  <nav-bar 
+    title="开通会员"
+    show-back="{{true}}"
+  />
+
+  <!-- 内容区域 -->
+  <view class="content" style="padding-top: {{navBarHeight}}px;">
+    
+    <!-- 用户信息 -->
+    <view class="member-card">
+      <view class="member-row">
+        <image class="member-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"/>
+        <view class="member-info">
+          <text class="member-name">{{userInfo.nickName || '未登录'}}</text>
+          <text class="member-badge {{vipLevel}}">{{vipLevel === 'free' ? '普通用户' : '会员'}}</text>
+          <text class="member-expire" wx:if="{{vipExpireTime}}">{{vipExpireTime}} 到期</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 套餐选择 -->
+    <view class="plan-section">
+      <view class="section-title">选择套餐</view>
+      <view class="plan-cards">
+        <view class="plan {{selectedPlan === 'month' ? 'active' : ''}}" bindtap="selectPlan" data-plan="month">
+          <view class="plan-header">
+            <text class="plan-name">月卡</text>
+            <text class="plan-price">¥19.9<text class="plan-unit">/月</text></text>
+          </view>
+          <text class="plan-original">原价 ¥29.9</text>
+        </view>
+        <view class="plan {{selectedPlan === 'year' ? 'active' : ''}}" bindtap="selectPlan" data-plan="year">
+          <view class="plan-badge">超值</view>
+          <view class="plan-header">
+            <text class="plan-name">年卡</text>
+            <text class="plan-price">¥199<text class="plan-unit">/年</text></text>
+          </view>
+          <text class="plan-original">月均 ¥16.6</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 权益说明 -->
+    <view class="perks-section">
+      <view class="section-title">会员权益</view>
+      <view class="perks-list">
+        <view class="perk-item">
+          <text class="perk-icon">♾️</text>
+          <text class="perk-text">无限次使用 AI 生成</text>
+        </view>
+        <view class="perk-item">
+          <text class="perk-icon">📸</text>
+          <text class="perk-text">高清画质下载</text>
+        </view>
+        <view class="perk-item">
+          <text class="perk-icon">🎨</text>
+          <text class="perk-text">解锁全部风格模板</text>
+        </view>
+        <view class="perk-item">
+          <text class="perk-icon">⚡</text>
+          <text class="perk-text">优先排队处理</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部按钮 -->
+  <view class="bottom-bar safe-bottom">
+    <view class="btn-primary" bindtap="subscribe">
+      <text>立即开通 {{selectedPlan === 'month' ? '¥19.9/月' : '¥199/年'}}</text>
+    </view>
+  </view>
+</view>

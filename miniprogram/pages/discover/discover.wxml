@@ -1,0 +1,115 @@
+<!-- 发现页 - 暖感真实风 -->
+<view class="page">
+
+  <!-- 导航 -->
+  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner">
+      <text class="nav-title">发现</text>
+      <view class="nav-search" bindtap="toggleSearch">
+        <text class="search-icon">{{showSearch ? '✕' : '🔍'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-bar {{showSearch ? 'show' : ''}}" style="top: {{navBarHeight}}px;">
+    <view class="search-input-wrap">
+      <text class="search-icon-left">🔍</text>
+      <input
+        class="search-input"
+        placeholder="搜索作品..."
+        placeholder-class="search-ph"
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        focus="{{searchFocus}}"
+        confirm-type="search"
+      />
+      <text class="search-clear" wx:if="{{searchKeyword}}" bindtap="clearSearch">✕</text>
+    </view>
+  </view>
+
+  <!-- 分类 -->
+  <view class="sticky-bar" style="top: {{navBarHeight}}px;">
+    <scroll-view scroll-x class="tab-scroll" enhanced show-scrollbar="{{false}}">
+      <view class="tab-list">
+        <view class="tab-item {{activeTab === item ? 'active' : ''}}"
+          wx:for="{{tabs}}" wx:key="*this"
+          bindtap="switchTab" data-tab="{{item}}">{{item}}</view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 瀑布流 -->
+  <scroll-view
+    scroll-y
+    class="scroll-area"
+    style="padding-top: calc({{navBarHeight}}px + 80rpx + 16rpx);"
+    bindscrolltolower="loadMore"
+    refresher-enabled
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+  >
+    <!-- 骨架屏 -->
+    <block wx:if="{{loading}}">
+      <view class="waterfall">
+        <view class="waterfall-col">
+          <view class="skeleton-card"><view class="skeleton-img skeleton"></view><view class="skeleton-text skeleton"></view></view>
+          <view class="skeleton-card"><view class="skeleton-img skeleton"></view><view class="skeleton-text skeleton"></view></view>
+        </view>
+        <view class="waterfall-col">
+          <view class="skeleton-card"><view class="skeleton-img skeleton"></view><view class="skeleton-text skeleton"></view></view>
+          <view class="skeleton-card"><view class="skeleton-img skeleton"></view><view class="skeleton-text skeleton"></view></view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 空状态 -->
+    <block wx:elif="{{leftCol.length === 0 && rightCol.length === 0}}">
+      <view class="empty-state">
+        <text class="empty-icon">🔍</text>
+        <text class="empty-text">暂无相关作品</text>
+        <text class="empty-hint" wx:if="{{searchKeyword}}">换个关键词试试</text>
+      </view>
+    </block>
+
+    <!-- 内容 -->
+    <block wx:else>
+      <view class="waterfall">
+        <view class="waterfall-col">
+          <view class="work-card tap-light" wx:for="{{leftCol}}" wx:key="id">
+            <image class="work-img" src="{{item.cover}}" mode="aspectFill" style="height: {{item.h}}rpx;" lazy-load catchtap="onImageTap" data-item="{{item}}"/>
+            <view class="work-info">
+              <text class="work-title">{{item.title}}</text>
+              <view class="work-footer">
+                <view class="work-meta">
+                  <text class="likes-text">{{item.likes}} 赞</text>
+                  <view class="favorite-btn {{item.isFavorited ? 'active' : ''}}" catchtap="onToggleFavorite" data-item="{{item}}">❤️</view>
+                </view>
+                <view class="make-same-btn-discover" catchtap="onMakeSame" data-item="{{item}}">做同款</view>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view class="waterfall-col">
+          <view class="work-card tap-light" wx:for="{{rightCol}}" wx:key="id">
+            <image class="work-img" src="{{item.cover}}" mode="aspectFill" style="height: {{item.h}}rpx;" lazy-load catchtap="onImageTap" data-item="{{item}}"/>
+            <view class="work-info">
+              <text class="work-title">{{item.title}}</text>
+              <view class="work-footer">
+                <view class="work-meta">
+                  <text class="likes-text">{{item.likes}} 赞</text>
+                  <view class="favorite-btn {{item.isFavorited ? 'active' : ''}}" catchtap="onToggleFavorite" data-item="{{item}}">❤️</view>
+                </view>
+                <view class="make-same-btn-discover" catchtap="onMakeSame" data-item="{{item}}">做同款</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="load-more" wx:if="{{hasMore}}">加载中...</view>
+      <view class="no-more" wx:else>~ 已经到底啦 ~</view>
+    </block>
+
+  </scroll-view>
+
+</view>

@@ -1,0 +1,114 @@
+<!-- 设置页面 -->
+<view class="page">
+  
+  <!-- 自定义导航栏组件 -->
+  <nav-bar 
+    title="设置"
+    show-back="{{true}}"
+  />
+
+  <!-- 内容区域 -->
+  <scroll-view scroll-y class="content" style="padding-top: {{navBarHeight}}px;">
+
+    <!-- 用户信息 -->
+    <view class="user-section" wx:if="{{userInfo}}">
+      <view class="user-card">
+        <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"/>
+        <view class="user-info">
+          <text class="user-name">{{userInfo.nickName}}</text>
+          <text class="user-id">ID: {{userId}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 设置项 -->
+    <view class="settings-section">
+      <!-- 账号设置 -->
+      <view class="settings-group" wx:if="{{userInfo}}">
+        <text class="group-title">账号设置</text>
+        <view class="setting-item" bindtap="onEditProfile">
+          <view class="setting-left">
+            <text class="setting-icon">👤</text>
+            <text class="setting-name">编辑资料</text>
+          </view>
+          <text class="setting-arrow">›</text>
+        </view>
+        <view class="setting-item" bindtap="onChangeAvatar">
+          <view class="setting-left">
+            <text class="setting-icon">📷</text>
+            <text class="setting-name">更换头像</text>
+          </view>
+          <text class="setting-arrow">›</text>
+        </view>
+      </view>
+
+      <!-- 通用设置 -->
+      <view class="settings-group">
+        <text class="group-title">通用设置</text>
+        <view class="setting-item">
+          <view class="setting-left">
+            <text class="setting-icon">🌙</text>
+            <text class="setting-name">深色模式</text>
+          </view>
+          <switch checked="{{themeMode === 'dark'}}" bindchange="onThemeToggle" color="var(--primary)"/>
+        </view>
+        <view class="setting-item">
+          <view class="setting-left">
+            <text class="setting-icon">💾</text>
+            <text class="setting-name">自动保存</text>
+          </view>
+          <switch checked="{{settings.autoSave}}" bindchange="onSwitchSetting" data-key="autoSave" color="var(--primary)"/>
+        </view>
+      </view>
+
+      <!-- 存储 -->
+      <view class="settings-group">
+        <text class="group-title">存储</text>
+        <view class="setting-item" bindtap="onClearCache">
+          <view class="setting-left">
+            <text class="setting-icon">🗑️</text>
+            <text class="setting-name">清除缓存</text>
+          </view>
+          <view class="setting-right">
+            <text class="setting-value">{{cacheSize}}</text>
+            <text class="setting-arrow">›</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 关于 -->
+      <view class="settings-group">
+        <text class="group-title">关于</text>
+        <view class="setting-item" bindtap="onAbout">
+          <view class="setting-left">
+            <text class="setting-icon">ℹ️</text>
+            <text class="setting-name">关于照片工坊</text>
+          </view>
+          <text class="setting-arrow">›</text>
+        </view>
+        <view class="setting-item" bindtap="onPrivacy">
+          <view class="setting-left">
+            <text class="setting-icon">🔒</text>
+            <text class="setting-name">隐私政策</text>
+          </view>
+          <text class="setting-arrow">›</text>
+        </view>
+        <view class="setting-item" bindtap="onAgreement">
+          <view class="setting-left">
+            <text class="setting-icon">📄</text>
+            <text class="setting-name">用户协议</text>
+          </view>
+          <text class="setting-arrow">›</text>
+        </view>
+      </view>
+
+      <!-- 退出登录 -->
+      <view class="settings-group" wx:if="{{userInfo}}">
+        <view class="setting-item logout" bindtap="onLogout">
+          <text class="logout-text">退出登录</text>
+        </view>
+      </view>
+    </view>
+
+  </scroll-view>
+</view>
