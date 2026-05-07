@@ -45,7 +45,7 @@
   padding: 36rpx 0; border-bottom: 1rpx solid var(--line); }
 .step { display:flex; align-items:center; gap: 12rpx; opacity: 0.4; }
 .step.active { opacity: 1; }
-.step.current .step-n { background: var(--ember); color: var(--cream-0); border-color: var(--ember); }
+.step.current .step-n { background: var(--ember); color: #FFFFFF; border-color: var(--ember); }
 .step-n { width: 44rpx; height: 44rpx; border-radius: 50%;
   border: 1rpx solid var(--cream-3); color: var(--cream-2);
   font-family: var(--f-mono); font-size: 22rpx;
@@ -105,7 +105,7 @@
 
 .ai-actions { margin-top: 20rpx; }
 .btn-mini { display:inline-flex; align-items:center; gap: 8rpx;
-  padding: 16rpx 28rpx; background: var(--ember); color: var(--cream-0);
+  padding: 16rpx 28rpx; background: var(--ember); color: #FFFFFF;
   border-radius: 9999rpx; font-size: 26rpx; }
 .btn-mini.disabled { opacity: 0.4; }
 .ai-result { margin-top: 28rpx; padding: 24rpx 26rpx;
@@ -134,7 +134,7 @@
   background: linear-gradient(to top, var(--ink-0) 70%, transparent); }
 .btn-ember, .btn-cream { flex: 1; display:flex; align-items:center; justify-content:center;
   gap: 12rpx; padding: 28rpx 0; border-radius: 9999rpx; font-size: 30rpx; }
-.btn-ember { background: var(--ember); color: var(--cream-0); }
+.btn-ember { background: var(--ember); color: #FFFFFF; }
 .btn-cream { background: transparent; color: var(--cream-1);
   border: 1rpx solid var(--line-strong); }
 .btn-ember.disabled { opacity: 0.4; }
@@ -146,5 +146,5 @@
 .hobby-chip { padding: 14rpx 28rpx; border-radius: 9999rpx;
   background: var(--ink-2); border: 1rpx solid var(--line);
   color: var(--cream-1); font-size: 26rpx; }
-.hobby-chip.active { background: var(--ember); color: var(--cream-0);
-  border-color: var(--ember); }
+.hobby-chip.active { background: var(--ember-soft); border-color: var(--ember);
+  color: var(--ember); }

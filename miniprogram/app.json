@@ -82,6 +82,7 @@
     "navigationStyle": "custom",
     "backgroundColor": "#0A0806"
   },
+  "darkmode": true,
   "tabBar": {
     "custom": true,
     "color": "#8A8072",

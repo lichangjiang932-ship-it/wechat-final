@@ -40,12 +40,8 @@ Page({
     photo: '',
     hobby: '',
     caption: '',
-    captionMode: 'preset',
-    aiKeyword: '',
-    aiLoading: false,
     polishLoading: false,
     polishedOnce: false,
-    presets: PRESETS,
     quickAges: QUICK_AGES,
     canNext: false,
     rendering: false,
@@ -196,62 +192,15 @@ Page({
   onCaptionEdit(e) {
     this.setData({ caption: e.detail.value });
     this.refreshCanNext();
-  },
-
-  // ===== 文案 =====
-  switchCaptionMode(e) {
-    const m = e.currentTarget.dataset.m;
-    this.setData({ captionMode: m });
-    if (m === 'preset' && !PRESETS.includes(this.data.caption)) {
-      this.setData({ caption: PRESETS[0] });
-      wx.nextTick(() => this.renderPoster());
-    }
-  },
-  pickPreset(e) {
-    this.setData({ caption: e.currentTarget.dataset.c });
-    wx.nextTick(() => this.renderPoster());
-  },
-  onAiKeywordInput(e) { this.setData({ aiKeyword: e.detail.value }); },
-  onCaptionInput(e) {
-    this.setData({ caption: e.detail.value });
-    // 防抖渲染
-    if (this._capTimer) clearTimeout(this._capTimer);
-    this._capTimer = setTimeout(() => this.renderPoster(), 400);
-  },
-  async generateCaption() {
-    const kw = (this.data.aiKeyword || '').trim();
-    if (!kw) { wx.showToast({ title: '请先输入关键词', icon: 'none' }); return; }
-    if (this.data.aiLoading) return;
-    this.setData({ aiLoading: true });
-    try {
-      // 复用 ai 云函数：用 generate-caption 简易调用；若云函数暂未实现则降级为本地拼接
-      let caption = '';
-      try {
-        const res = await callFunction('ai', {
-          action: 'caption',
-          keyword: kw,
-          name: this.data.name,
-          age: this.data.age,
-        }, { silent: true });
-        if (res && res.caption) caption = String(res.caption).slice(0, 40);
-      } catch (_) { /* 云函数不支持时降级 */ }
-      if (!caption) {
-        // 本地兜底模板
-        const templates = [
-          `热爱${kw}的小朋友，让${kw}成为成长里最亮的一束光。`,
-          `${kw}是 ${this.data.name || '我'} 的小宇宙，每一次都全力以赴。`,
-          `因为${kw}而闪闪发光的小孩子。`,
-        ];
-        caption = templates[Math.floor(Math.random() * templates.length)].slice(0, 40);
-      }
-      this.setData({ caption });
-      wx.nextTick(() => this.renderPoster());
-    } finally {
-      this.setData({ aiLoading: false });
+    // 若已在预览步（step=3），实时刷新预览
+    if (this.data.step === 3) {
+      if (this._capTimer) clearTimeout(this._capTimer);
+      this._capTimer = setTimeout(() => this.renderPoster(), 400);
     }
   },
 
   // ===== Canvas 海报合成 =====
+
   async renderPoster() {
     if (this.data.step !== 3) return;
     this.setData({ rendering: true });
