@@ -1,0 +1,30 @@
+<view class="pp-mask" wx:if="{{visible}}" catchtouchmove="noop">
+  <view class="pp-card" catchtap="noop">
+    <view class="pp-head">
+      <text class="label pp-eyebrow">§ PRIVACY · 用户须知</text>
+      <text class="display pp-title">在你开始使用前</text>
+      <text class="display display-italic pp-title-it">请阅读并同意以下条款</text>
+    </view>
+
+    <scroll-view scroll-y class="pp-body">
+      <text class="pp-p">为保障你的合法权益，使用妙摄前请你充分阅读并理解 <text class="pp-link" bindtap="openPrivacyContract">{{privacyContractName}}</text>。</text>
+      <text class="pp-p">我们会严格按照法律法规与隐私政策处理你的个人信息，主要包括：</text>
+      <text class="pp-li">· 微信账号信息（昵称、头像）—— 用于登录与个性化展示</text>
+      <text class="pp-li">· 你创作的描述词与上传图片 —— 用于 AI 生成与海报合成</text>
+      <text class="pp-li">· 必要的设备与网络信息 —— 用于性能优化</text>
+      <text class="pp-p">所有 AI 生成内容均添加显著标识，违规内容将被拦截。点击「同意并继续」即表示你已阅读并同意全部条款。</text>
+    </scroll-view>
+
+    <view class="pp-actions">
+      <view class="pp-btn pp-btn-cream tap" bindtap="onDisagree">
+        <text>暂不使用</text>
+      </view>
+      <button id="agree-btn" class="pp-btn pp-btn-ember"
+              open-type="agreePrivacyAuthorization"
+              bindagreeprivacyauthorization="onAgree"
+              bindtap="onAgree">
+        同意并继续
+      </button>
+    </view>
+  </view>
+</view>

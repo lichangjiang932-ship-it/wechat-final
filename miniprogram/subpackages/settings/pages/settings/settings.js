@@ -187,19 +187,11 @@ Page({
   },
 
   onPrivacy() {
-    wx.showModal({
-      title: '隐私政策',
-      content: '照片工坊隐私政策\n\n1. 我们仅收集必要信息用于提供服务\n2. 头像和昵称仅用于个人资料展示\n3. 上传的图片仅用于 AI 处理\n4. 不会将信息提供给第三方\n5. 可随时删除您的数据',
-      showCancel: false,
-    });
+    wx.navigateTo({ url: '/subpackages/policy/pages/privacy/privacy' });
   },
 
   onAgreement() {
-    wx.showModal({
-      title: '用户协议',
-      content: '照片工坊用户协议\n\n1. 请遵守当地法律法规使用本服务\n2. 请勿上传违法、有害内容\n3. 生成的图片可用于个人用途\n4. 禁止用于商业用途或二次销售\n5. 如有问题请联系客服',
-      showCancel: false,
-    });
+    wx.navigateTo({ url: '/subpackages/policy/pages/terms/terms' });
   },
 
   onLogout() {

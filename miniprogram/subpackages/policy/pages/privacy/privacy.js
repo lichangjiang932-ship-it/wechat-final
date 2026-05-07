@@ -1,0 +1,2 @@
+// privacy page
+Page({ onLoad() {} });

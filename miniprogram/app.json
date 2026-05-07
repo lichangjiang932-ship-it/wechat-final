@@ -43,6 +43,14 @@
       "pages": [
         "pages/poster/poster"
       ]
+    },
+    {
+      "root": "subpackages/policy",
+      "name": "policy",
+      "pages": [
+        "pages/privacy/privacy",
+        "pages/terms/terms"
+      ]
     }
   ],
   "preloadRule": {
@@ -105,5 +113,16 @@
   },
   "lazyCodeLoading": "requiredComponents",
   "sitemapLocation": "sitemap.json",
-  "__usePrivacyCheck__": true
+  "__usePrivacyCheck__": true,
+  "permission": {
+    "scope.writePhotosAlbum": {
+      "desc": "用于将你创作的 AI 作品和童趣海报保存到本地相册"
+    },
+    "scope.album": {
+      "desc": "用于让你选择本地图片作为创作素材或海报照片"
+    },
+    "scope.camera": {
+      "desc": "用于让你拍摄照片作为创作素材或海报照片"
+    }
+  }
 }

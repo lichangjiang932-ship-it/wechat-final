@@ -262,6 +262,13 @@ Page({
   goDownloads() { wx.navigateTo({ url: '/subpackages/history/pages/history/history?tab=downloads' }); },
   goUpload()    { wx.navigateTo({ url: '/pages/upload/upload' }); },
   goPoster()    { wx.navigateTo({ url: '/subpackages/poster/pages/poster/poster' }); },
+  openPolicy(e)  {
+    const doc = (e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.doc) || 'privacy';
+    const url = doc === 'terms'
+      ? '/subpackages/policy/pages/terms/terms'
+      : '/subpackages/policy/pages/privacy/privacy';
+    wx.navigateTo({ url });
+  },
   openMember()  { wx.navigateTo({ url: '/subpackages/member/pages/member/member' }); },
   goSettings()  { wx.navigateTo({ url: '/subpackages/settings/pages/settings/settings' }); },
 

@@ -160,3 +160,5 @@
     <view class="dock-spacer"/>
   </scroll-view>
 </view>
+
+<privacy-popup/>

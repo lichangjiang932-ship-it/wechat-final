@@ -50,7 +50,32 @@
   "condition": {},
   "compileType": "miniprogram",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "value": "node_modules",
+        "type": "folder"
+      },
+      {
+        "value": ".git",
+        "type": "folder"
+      },
+      {
+        "value": ".backup-*",
+        "type": "glob"
+      },
+      {
+        "value": "*.md",
+        "type": "glob"
+      },
+      {
+        "value": "README*",
+        "type": "glob"
+      },
+      {
+        "value": ".env*",
+        "type": "glob"
+      }
+    ],
     "include": []
   },
   "editorSetting": {}

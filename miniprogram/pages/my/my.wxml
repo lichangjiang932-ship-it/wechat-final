@@ -165,7 +165,7 @@
       <view class="btn-ember tap" bindtap="confirmLogin">
         <text>{{i18n['login.confirm']}}</text>
       </view>
-      <text class="login-policy">{{i18n['login.policy.prefix']}} <text class="login-link">{{i18n['login.policy.tos']}}</text> {{i18n['login.policy.sep']}} <text class="login-link">{{i18n['login.policy.privacy']}}</text></text>
+      <text class="login-policy">{{i18n['login.policy.prefix']}} <text class="login-link tap" data-doc="terms" bindtap="openPolicy">{{i18n['login.policy.tos']}}</text> {{i18n['login.policy.sep']}} <text class="login-link tap" data-doc="privacy" bindtap="openPolicy">{{i18n['login.policy.privacy']}}</text></text>
     </view>
   </view>
 
@@ -217,3 +217,5 @@
   </view>
 
 </view>
+
+<privacy-popup/>

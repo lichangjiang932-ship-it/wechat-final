@@ -8,13 +8,13 @@
         </view>
       </block>
       <block wx:elif="{{iconType === 'heart'}}">
-        <view class="heart-icon animate-heart">❤️</view>
+        <view class="heart-icon animate-heart ic ic-heart-fill"/>
       </block>
       <block wx:elif="{{iconType === 'star'}}">
-        <view class="star-icon animate-bounce">⭐</view>
+        <view class="star-icon animate-bounce ic ic-star-fill"/>
       </block>
       <block wx:else>
-        <view class="default-icon">✓</view>
+        <view class="default-icon"><view class="default-tick"/></view>
       </block>
     </view>
     <text class="toast-title">{{title}}</text>

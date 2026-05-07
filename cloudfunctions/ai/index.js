@@ -402,11 +402,20 @@ exports.main = async (event, context) => {
       case 'generate': // 文生图
         log.info(requestId, '文生图请求');
         if (event.prompt && event.prompt.length > MAX_PROMPT_LENGTH) return { code: -1, msg: `描述不能超过${MAX_PROMPT_LENGTH}字` };
+        // 内容安全审核（微信要求，不过不能上线）
+        {
+          const sec = await msgSecCheck(event.prompt, openid, requestId);
+          if (!sec.pass) return { code: -1, msg: sec.msg || '内容含违规信息，请修改后重试' };
+        }
         return await jimengGenerate(openid, event.prompt, event.styleId || '', event.imageRatio || 1, requestId);
 
       case 'img2img': // 图生图
         log.info(requestId, '图生图请求');
         if (event.prompt && event.prompt.length > MAX_PROMPT_LENGTH) return { code: -1, msg: `描述不能超过${MAX_PROMPT_LENGTH}字` };
+        if (event.prompt) {
+          const sec = await msgSecCheck(event.prompt, openid, requestId);
+          if (!sec.pass) return { code: -1, msg: sec.msg || '内容含违规信息，请修改后重试' };
+        }
         return await jimengImg2Img(openid, event.prompt, event.styleId || '', event.imageFileID, event.imageRatio || 1, requestId);
 
       // ===== 用户用量 ==========
@@ -417,6 +426,10 @@ exports.main = async (event, context) => {
         const planInfo = validatePlan(event.plan);
         if (!planInfo.valid) return { code: -1, msg: planInfo.msg };
         return await createOrder(openid, event.plan, requestId, event);
+
+      // ===== AI 海报文案生成 =====
+      case 'caption':
+        return await generatePosterCaption(event, openid, requestId);
 
       default:
         log.warn(requestId, '未知操作', { action });
@@ -964,4 +977,83 @@ function formatError(e) {
   if (msg.includes('429') || msg.includes('限额') || msg.includes('rate limit')) return '请求过于频繁，请稍后重试';
 
   return '服务暂时不可用，请稍后重试';
+}
+
+// ============================================================
+// 内容安全审核（微信 security.msgSecCheck v2）
+// ============================================================
+async function msgSecCheck(content, openid, requestId) {
+  if (!content || !content.trim()) return { pass: true };
+  try {
+    const res = await cloud.openapi.security.msgSecCheck({
+      version: 2,
+      scene: 1, // 1: 资料 2: 评论 3: 论坛 4: 社交日志（用 1 通用）
+      content: String(content).slice(0, 5000),
+      openid,
+    });
+    if (res && res.errCode === 0) {
+      // result.suggest: pass / review / risky
+      const suggest = (res.result && res.result.suggest) || 'pass';
+      if (suggest === 'pass') return { pass: true };
+      log.warn(requestId, '内容安全审核未通过', { suggest, label: res.result && res.result.label });
+      return { pass: false, msg: '内容含违规信息，请修改后重试' };
+    }
+    log.warn(requestId, '内容安全接口返回异常', res);
+    // 接口异常时为不阻塞用户体验，默认放行（线上可改为拦截）
+    return { pass: true };
+  } catch (e) {
+    log.error(requestId, 'msgSecCheck 异常:', e.message);
+    // 接口报错时放行（保证服务可用），但应在监控里告警
+    return { pass: true };
+  }
+}
+
+// ============================================================
+// AI 海报文案生成（基于 DeepSeek 短文本润色）
+// ============================================================
+async function generatePosterCaption(event, openid, requestId) {
+  const keyword = String(event.keyword || '').trim().slice(0, 20);
+  const name = String(event.name || '').trim().slice(0, 12);
+  if (!keyword) return { code: -1, msg: '请提供关键词' };
+
+  // 内容安全过滤
+  const sec = await msgSecCheck(`${name} ${keyword}`, openid, requestId);
+  if (!sec.pass) return { code: -1, msg: sec.msg };
+
+  if (!DEEPSEEK_API_KEY || !DEEPSEEK_MODEL) {
+    return { code: 0, caption: `热爱${keyword}的小朋友，让${keyword}成为成长里最亮的一束光。` };
+  }
+
+  const prompt = `你是一位儿童教育文案作者。为一名小朋友写一句童趣文案，要求：
+- 不超过 30 个汉字
+- 体现 "${keyword}" 这个特点
+- 温暖、积极、有画面感
+- 只输出文案本身，不加引号、不加解释`;
+
+  try {
+    const axios = require('axios');
+    const r = await axios.post(
+      'https://api.deepseek.com/chat/completions',
+      {
+        model: DEEPSEEK_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.85,
+        max_tokens: 80,
+      },
+      { headers: { 'Authorization': `Bearer ${DEEPSEEK_API_KEY}`, 'Content-Type': 'application/json' }, timeout: 8000 }
+    );
+    const caption = (r.data?.choices?.[0]?.message?.content || '').trim()
+      .replace(/^["「『]|["」』]$/g, '')
+      .slice(0, 40);
+    if (!caption) throw new Error('empty caption');
+
+    // 出参也过一次审核
+    const sec2 = await msgSecCheck(caption, openid, requestId);
+    if (!sec2.pass) return { code: 0, caption: `热爱${keyword}的小朋友，让${keyword}成为成长里最亮的一束光。` };
+
+    return { code: 0, caption };
+  } catch (e) {
+    log.warn(requestId, 'generatePosterCaption 失败，降级:', e.message);
+    return { code: 0, caption: `热爱${keyword}的小朋友，让${keyword}成为成长里最亮的一束光。` };
+  }
 }
