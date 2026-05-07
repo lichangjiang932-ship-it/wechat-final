@@ -1,5 +1,13 @@
 /* poster.wxss · KIDS SHOWCASE */
-.poster-page { background: var(--ink-0); min-height: 100vh; }
+.poster-page { background: var(--ink-0); min-height: 100vh; height: 100vh; display: flex; flex-direction: column; }
+
+.scroll {
+  flex: 1;
+  height: 0; /* 关键：flex 子项需要 height:0 才能在内部 scroll-y */
+  box-sizing: border-box;
+  padding: 0 32rpx;
+  padding-bottom: calc(220rpx + env(safe-area-inset-bottom)); /* 给底部 action-bar 留出空间，避免输入框被遮 */
+}
 
 .nav { position: fixed; top:0; left:0; right:0; z-index:10;
   background: linear-gradient(to bottom, var(--ink-0) 60%, transparent); }
@@ -11,7 +19,7 @@
   -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain;
   mask-repeat: no-repeat; mask-position: center; mask-size: contain; }
 
-.scroll { padding: 0 32rpx 240rpx; }
+/* 原 .scroll 已合并到上方须高度 + safe-bottom */
 
 .ai-notice { display:flex; align-items:center; gap:20rpx;
   margin: 24rpx 0 32rpx; padding: 18rpx 24rpx;
@@ -121,7 +129,8 @@
   color: var(--cream-0); border-radius: 16rpx; }
 
 .action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 5;
-  display:flex; gap: 16rpx; padding: 24rpx 32rpx;
+  display:flex; gap: 16rpx;
+  padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
   background: linear-gradient(to top, var(--ink-0) 70%, transparent); }
 .btn-ember, .btn-cream { flex: 1; display:flex; align-items:center; justify-content:center;
   gap: 12rpx; padding: 28rpx 0; border-radius: 9999rpx; font-size: 30rpx; }

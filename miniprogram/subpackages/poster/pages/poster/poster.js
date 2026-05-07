@@ -3,6 +3,7 @@ const { logger } = require('../../../../config/constants');
 const { computeNavBar } = require('../../../../utils/common');
 const { callFunction } = require('../../../../utils/cloud');
 const i18n = require('../../../../utils/i18n');
+const themeMod = require('../../../../utils/theme');
 
 const STEP_DEFS = [
   { key: 'name',    label: '姓名' },
@@ -50,6 +51,8 @@ Page({
     previewW: 270,
     previewH: 360,
     _savedPath: '',
+    theme: 'dark',
+    themeClass: 'theme-dark',
   },
 
   onLoad() {
@@ -58,13 +61,32 @@ Page({
     const sysInfo = wx.getWindowInfo();
     const previewW = Math.floor((sysInfo.windowWidth - 64 - 64) * 0.85); // 屏宽 - 外边距 - 卡片内边距
     const previewH = Math.floor(previewW * OUT_H / OUT_W);
+    const theme = themeMod.getTheme();
     this.setData({
       statusBarHeight: nav.statusBarHeight,
       navBarHeight: nav.navBarHeight,
       previewW,
       previewH,
       i18n: i18n.pack(),
+      theme,
+      themeClass: themeMod.themeClass(theme),
     });
+    // 监听主题切换
+    this._themeCb = (t) => {
+      this.setData({ theme: t, themeClass: themeMod.themeClass(t) });
+    };
+    themeMod.onThemeChange(this._themeCb);
+  },
+
+  onShow() {
+    const theme = themeMod.getTheme();
+    if (theme !== this.data.theme) {
+      this.setData({ theme, themeClass: themeMod.themeClass(theme) });
+    }
+  },
+
+  onUnload() {
+    if (this._themeCb) themeMod.offThemeChange(this._themeCb);
   },
 
   onBack() { wx.navigateBack(); },

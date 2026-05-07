@@ -1,5 +1,5 @@
 <!-- subpackages/poster/pages/poster/poster.wxml — 童趣海报定制 -->
-<view class="page poster-page" style="--nav-bar-height: {{navBarHeight}}px;">
+<view class="page poster-page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
 
   <!-- Custom nav -->
   <view class="nav" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight + statusBarHeight}}px;">
