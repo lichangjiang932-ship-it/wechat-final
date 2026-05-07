@@ -1,3 +1,4 @@
+const { logger } = require('../../../../config/constants');
 // subpackages/preview/pages/preview/preview.js - 图片详情页
 const { callFunction, checkLogin } = require('../../../../utils/cloud');
 const { computeNavBar } = require('../../../../utils/common');
@@ -109,7 +110,7 @@ Page({
   },
 
   onImageError() {
-    console.warn('[preview] 图片加载失败', this.data.imageUrl);
+    logger.warn('[preview] 图片加载失败', this.data.imageUrl);
   },
 
   onCopyPrompt() {

@@ -1,3 +1,4 @@
+const { logger } = require('../../config/constants');
 // pages/discover/discover.js - 发现页（接入真实云数据库）
 const { computeNavBar } = require('../../utils/common');
 const { callFunction, checkLogin } = require('../../utils/cloud');
@@ -114,7 +115,7 @@ Page({
         this.setData({ loading: false, refreshing: false, empty: page === 1 });
       }
     } catch (e) {
-      console.error('[discover] 加载作品失败:', e.message);
+      logger.error('[discover] 加载作品失败:', e.message);
       this.setData({ loading: false, refreshing: false, empty: page === 1 && this.data.displayWorks.length === 0 });
       if (page === 1) {
         wx.showToast({ title: '加载失败，请下拉刷新', icon: 'none' });
@@ -142,7 +143,7 @@ Page({
         return w;
       });
     } catch (e) {
-      console.warn('[discover] 云链接转换失败:', e.message);
+      logger.warn('[discover] 云链接转换失败:', e.message);
       return works.map(w => {
         if (w.cover && w.cover.startsWith('cloud://')) {
           return { ...w, cover: '' };

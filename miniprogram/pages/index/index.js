@@ -1,3 +1,4 @@
+const { logger } = require('../../config/constants');
 // pages/index/index.js - Editorial dark home
 const { computeNavBar } = require('../../utils/common');
 const { callFunction } = require('../../utils/cloud');
@@ -125,7 +126,7 @@ Page({
       });
       return map;
     } catch (e) {
-      console.warn('[index] 社区云链接转换失败:', e.message || e);
+      logger.warn('[index] 社区云链接转换失败:', e.message || e);
       return {};
     }
   },
@@ -149,7 +150,7 @@ Page({
         communityCells: normalized.map((w, idx) => ({ i: idx, by: w.by, area: COMMUNITY_AREAS[idx] })),
       });
     } catch (e) {
-      console.warn('[index] 社区作品加载失败:', e.message || e);
+      logger.warn('[index] 社区作品加载失败:', e.message || e);
     }
   },
 
@@ -200,7 +201,7 @@ Page({
       return;
     }
 
-    console.log('[loadCloudImages] 转换', allCloudUrls.length, '个云图片');
+    logger.debug('[loadCloudImages] 转换', allCloudUrls.length, '个云图片');
 
     // cloud:// 不能直接给 <image> 使用，必须先转换成 tempFileURL
     // 所以不能"先设本地再替换"，否则渲染层会尝试加载 cloud://... 报错
@@ -215,7 +216,7 @@ Page({
         if (item.tempFileURL) {
           urlMap[item.fileID] = item.tempFileURL;
         } else {
-          console.warn('[index] 云文件不可访问:', item.fileID, 'errMsg=', item.errMsg, 'status=', item.status);
+          logger.warn('[index] 云文件不可访问:', item.fileID, 'errMsg=', item.errMsg, 'status=', item.status);
         }
       });
 
@@ -234,9 +235,9 @@ Page({
       });
       this._applyLang(this.data.lang);
       this.loadCommunityWorks();
-      console.log('[loadCloudImages] 完成，替换', Object.keys(urlMap).length, '/', allCloudUrls.length);
+      logger.debug('[loadCloudImages] 完成，替换', Object.keys(urlMap).length, '/', allCloudUrls.length);
     } catch (e) {
-      console.warn('[loadCloudImages] 云图片转换失败:', e.message || e);
+      logger.warn('[loadCloudImages] 云图片转换失败:', e.message || e);
       // 失败：清空封面避免 <image> 尝试加载 cloud://，只保留文字
       const blank = (obj) => ({ ...obj, cover: '' });
       this.setData({

@@ -1,3 +1,4 @@
+const { logger } = require('../../config/constants');
 // pages/create/create.js - 创作页
 const { callFunction, uploadFile, checkLogin } = require('../../utils/cloud');
 const { computeNavBar, formatTime } = require('../../utils/common');
@@ -252,7 +253,7 @@ Page({
       }
       throw new Error('下载参考图失败');
     } catch (e) {
-      console.warn('[create] 参考图本地化失败:', e.message);
+      logger.warn('[create] 参考图本地化失败:', e.message);
       throw new Error('参考图不可用，请重新上传');
     }
   },
@@ -331,7 +332,7 @@ Page({
         throw new Error(result?.msg || '生成失败');
       }
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       const msg = (e && e.message) || '';
       // 并发限制错误：自动延迟重试（避免用户手动点）
       if (/繁忙|30 秒|并发|rate limit|50430|请稍后重试/i.test(msg)) {
@@ -435,7 +436,7 @@ Page({
         const watermarked = await addAIWatermark(filePath, 'watermarkCanvas', this);
         if (watermarked) filePath = watermarked;
       } catch (we) {
-        console.warn('[create] 水印合成失败，使用原图保存:', we && we.message);
+        logger.warn('[create] 水印合成失败，使用原图保存:', we && we.message);
       }
 
       // 3. 保存到相册
@@ -477,7 +478,7 @@ Page({
       works.unshift(work);
       if (works.length > 100) works = works.slice(0, 100);
       wx.setStorageSync('myWorks', works);
-    } catch (e) { console.error('本地保存作品失败:', e); }
+    } catch (e) { logger.error('本地保存作品失败:', e); }
 
     if (checkLogin()) {
       try {
@@ -488,7 +489,7 @@ Page({
           );
           wx.setStorageSync('myWorks', works);
         }
-      } catch (e) { console.log('作品云端同步失败:', e.message); }
+      } catch (e) { logger.debug('作品云端同步失败:', e.message); }
     }
   },
 

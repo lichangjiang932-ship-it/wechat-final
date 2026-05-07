@@ -1,3 +1,4 @@
+const { logger } = require('../../config/constants');
 // pages/upload/upload.js — 我的上传 · 真实比例预览版
 const { callFunction, uploadFile, checkLogin } = require('../../utils/cloud');
 const { computeNavBar, formatTime } = require('../../utils/common');
@@ -231,7 +232,7 @@ Page({
       this._uploadNext();
 
     } catch (e) {
-      console.error('[upload] 上传失败', e);
+      logger.error('[upload] 上传失败', e);
       const photos4 = [...this.data.photos];
       photos4[idx] = { ...photos4[idx], uploading: false, failed: true, progress: 0, status: 'failed' };
       this.setData({ photos: photos4 });
@@ -264,7 +265,7 @@ Page({
       this._uploadNext();
 
     } catch (e) {
-      console.error('[upload] 压缩上传失败', e);
+      logger.error('[upload] 压缩上传失败', e);
       const photos3 = [...this.data.photos];
       photos3[idx] = { ...photos3[idx], uploading: false, failed: true, status: 'failed' };
       this.setData({ photos: photos3 });
@@ -488,15 +489,15 @@ Page({
           time:   item.uploadTime || formatTime(Date.now()),
           cloudId: '',
         };
-        console.log('[upload] saving work to myWorks:', JSON.stringify(work));
+        logger.debug('[upload] saving work to myWorks:', JSON.stringify(work));
         try {
           let works = wx.getStorageSync('myWorks') || [];
           works.unshift(work);
           if (works.length > 100) works = works.slice(0, 100);
           wx.setStorageSync('myWorks', works);
-          console.log('[upload] myWorks count:', works.length);
+          logger.debug('[upload] myWorks count:', works.length);
         } catch (e) {
-          console.error('[upload] 本地保存作品失败', e);
+          logger.error('[upload] 本地保存作品失败', e);
         }
 
         // 云端（静默）
@@ -531,7 +532,7 @@ Page({
       }
       this.loadHistory();
     } catch (e) {
-      console.error('[upload] 保存历史失败', e);
+      logger.error('[upload] 保存历史失败', e);
     }
   },
 

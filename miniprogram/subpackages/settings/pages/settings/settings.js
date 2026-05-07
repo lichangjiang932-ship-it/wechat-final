@@ -1,3 +1,4 @@
+const { logger } = require('../../../../config/constants');
 // subpackages/settings/pages/settings/settings.js - 设置页面
 const { callFunction, checkLogin } = require('../../../../utils/cloud');
 const themeMod = require('../../../../utils/theme');
@@ -122,7 +123,7 @@ Page({
           this.setData({ userInfo: newUserInfo });
           if (checkLogin()) {
             callFunction('user', { action: 'updateProfile', nickName: res.content }, { silent: true }).catch(err => {
-              console.log('云端更新昵称失败:', err.message);
+              logger.debug('云端更新昵称失败:', err.message);
             });
           }
           wx.showToast({ title: '修改成功', icon: 'success' });
@@ -147,7 +148,7 @@ Page({
         this.setData({ userInfo });
         if (checkLogin()) {
           callFunction('user', { action: 'updateProfile', avatarUrl: tempFilePath }, { silent: true }).catch(err => {
-            console.log('云端更新头像失败:', err.message);
+            logger.debug('云端更新头像失败:', err.message);
           });
         }
         wx.showToast({ title: '头像已更新', icon: 'success' });

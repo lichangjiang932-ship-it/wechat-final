@@ -1,3 +1,4 @@
+const { logger } = require('../../config/constants');
 // pages/my/my.js - 我的
 const { callFunction, checkLogin } = require('../../utils/cloud');
 const { computeNavBar, formatDate } = require('../../utils/common');
@@ -118,7 +119,7 @@ Page({
         });
       }
     } catch (err) {
-      console.warn('加载用户信息失败:', err.message);
+      logger.warn('加载用户信息失败:', err.message);
     }
   },
 
@@ -170,7 +171,7 @@ Page({
       try {
         cloudUserInfo = await callFunction('user', { action: 'wxLogin' }, { silent: true });
       } catch (e) {
-        console.log('云函数登录失败，使用本地登录:', e.message);
+        logger.debug('云函数登录失败，使用本地登录:', e.message);
       }
       
       const userInfo = {
@@ -245,7 +246,7 @@ Page({
               success: (modalRes) => {
                 if (modalRes.confirm && modalRes.content) {
                   // 可以调用云函数保存反馈
-                  console.log(`[${type}] ${modalRes.content}`);
+                  logger.debug(`[${type}] ${modalRes.content}`);
                   wx.showToast({ title: '感谢您的反馈', icon: 'success' });
                 }
               }

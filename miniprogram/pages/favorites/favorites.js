@@ -1,3 +1,4 @@
+const { logger } = require('../../config/constants');
 // pages/favorites/favorites.js — Library tab: my works + favorites (merged)
 const { callFunction, checkLogin } = require('../../utils/cloud');
 const { computeNavBar } = require('../../utils/common');
@@ -129,7 +130,7 @@ Page({
       // Resolve any cloud:// URLs
       this._resolveCloudURLs(merged);
     } catch (err) {
-      console.log('[library] sync failed:', err && err.message);
+      logger.debug('[library] sync failed:', err && err.message);
     } finally {
       this.setData({ loading: false, refreshing: false });
     }
@@ -243,7 +244,7 @@ Page({
       });
       this._applyItems(updated);
     } catch (err) {
-      console.log('[library] getTempFileURL failed:', err && err.message);
+      logger.debug('[library] getTempFileURL failed:', err && err.message);
     }
   },
 

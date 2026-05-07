@@ -1,3 +1,4 @@
+const { logger } = require('../../../../config/constants');
 // subpackages/poster/pages/poster/poster.js — 童趣海报定制
 const { computeNavBar } = require('../../../../utils/common');
 const { callFunction } = require('../../../../utils/cloud');
@@ -196,7 +197,7 @@ Page({
         caption: this.data.caption || PRESETS[0],
       });
     } catch (err) {
-      console.error('[poster] render failed', err);
+      logger.error('[poster] render failed', err);
       wx.showToast({ title: '预览失败', icon: 'none' });
     } finally {
       this.setData({ rendering: false });
@@ -245,7 +246,7 @@ Page({
       this.setData({ _savedPath: filePath });
       wx.showToast({ title: '已保存到相册', icon: 'success' });
     } catch (err) {
-      console.error('[poster] save failed', err);
+      logger.error('[poster] save failed', err);
       if (!err || !err.errMsg || err.errMsg.indexOf('auth deny') === -1) {
         wx.showToast({ title: '保存失败', icon: 'none' });
       }
@@ -373,7 +374,7 @@ async function drawPoster(ctx, canvas, opts) {
     try {
       await drawPhotoIntoFrame(ctx, canvas, photo, photoX + 16, photoY + 16, photoW - 32, photoH - 32);
     } catch (e) {
-      console.warn('[poster] photo draw failed', e);
+      logger.warn('[poster] photo draw failed', e);
     }
   }
 }

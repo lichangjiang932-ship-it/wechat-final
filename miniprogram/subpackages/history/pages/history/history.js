@@ -1,3 +1,4 @@
+const { logger } = require('../../../../config/constants');
 // subpackages/history/pages/history/history.js — 我的作品（dark editorial）
 const { callFunction, checkLogin } = require('../../../../utils/cloud');
 const { computeNavBar, formatTime, saveImageToAlbum } = require('../../../../utils/common');
@@ -93,7 +94,7 @@ Page({
       wx.setStorageSync('myWorks', merged);
       this._resolveCloudURLs(merged);
     } catch (err) {
-      console.log('[history] cloud sync failed:', err && err.message);
+      logger.debug('[history] cloud sync failed:', err && err.message);
     } finally {
       this.setData({ loading: false, refreshing: false });
     }
@@ -117,7 +118,7 @@ Page({
       this._apply(updated);
       wx.setStorageSync('myWorks', updated);
     } catch (err) {
-      console.log('[history] getTempFileURL failed:', err && err.message);
+      logger.debug('[history] getTempFileURL failed:', err && err.message);
     }
   },
 
@@ -195,7 +196,7 @@ Page({
 
   onImgError(e) {
     const id = e.currentTarget.dataset.id;
-    console.log('[history] image load failed for id=', id);
+    logger.debug('[history] image load failed for id=', id);
     // 温和处理：仅标记加载失败，不自动删除，避免网络波动导致作品丢失
     const works = this.data.works.map(w => w.id === id ? { ...w, _imgError: true } : w);
     this._apply(works);
