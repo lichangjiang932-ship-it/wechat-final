@@ -141,3 +141,10 @@
 .btn-ember-icon, .btn-cream-icon { font-family: var(--f-mono); font-size: 28rpx; }
 
 .dock-spacer { height: 200rpx; }
+
+.hobby-chips { display:flex; flex-wrap:wrap; gap: 16rpx; margin-top: 20rpx; }
+.hobby-chip { padding: 14rpx 28rpx; border-radius: 9999rpx;
+  background: var(--ink-2); border: 1rpx solid var(--line);
+  color: var(--cream-1); font-size: 26rpx; }
+.hobby-chip.active { background: var(--ember); color: var(--cream-0);
+  border-color: var(--ember); }

@@ -74,10 +74,42 @@
       </view>
     </block>
 
-    <!-- Step 3 · Photo -->
+    <!-- Step 3 · Hobby (DeepSeek polish) -->
     <block wx:if="{{step === 2}}">
       <view class="card">
-        <text class="label card-eyebrow">03 · PHOTO</text>
+        <text class="label card-eyebrow">03 · HOBBY</text>
+        <text class="display card-title">孩子的爱好</text>
+        <text class="card-hint">输入一个爱好关键词（如：画画 / 钢琴 / 足球），点击 DeepSeek 润色为一句文案</text>
+        <input class="field" type="text" placeholder="例如：画画"
+               placeholder-class="field-ph"
+               value="{{hobby}}" bindinput="onHobbyInput" maxlength="20" focus="{{step===2}}"/>
+        <view class="hobby-chips">
+          <view wx:for="{{['画画','钢琴','舞蹈','足球','读书','积木','街舞','小提琴','玩车']}}" wx:key="*this"
+                class="hobby-chip {{hobby === item ? 'active' : ''}}"
+                data-h="{{item}}" bindtap="pickHobbyChip">
+            <text>{{item}}</text>
+          </view>
+        </view>
+        <view class="ai-actions">
+          <view class="btn-mini tap {{polishLoading ? 'disabled' : ''}}" bindtap="polishHobby">
+            <text>{{polishLoading ? 'DeepSeek 润色中…' : (polishedOnce ? '✦ 重新润色' : '✦ DeepSeek 润色')}}</text>
+          </view>
+        </view>
+        <view wx:if="{{caption}}" class="ai-result">
+          <text class="label ai-result-l">润色结果 · 可手动调整</text>
+          <textarea class="textarea" placeholder="试试调整几个字"
+                    placeholder-class="field-ph"
+                    value="{{caption}}" bindinput="onCaptionEdit"
+                    maxlength="40" auto-height/>
+          <text class="char-count">{{caption.length}} / 40</text>
+        </view>
+      </view>
+    </block>
+
+    <!-- Step 4 · Photo + Preview -->
+    <block wx:if="{{step === 3}}">
+      <view class="card">
+        <text class="label card-eyebrow">04 · PHOTO</text>
         <text class="display card-title">学员照片</text>
         <text class="card-hint">将放入右侧圆角矩形框，建议竖向构图</text>
         <view class="upload tap" bindtap="onChoosePhoto">
@@ -91,60 +123,6 @@
             <text class="label upload-sub">JPG / PNG · 自动裁剪 3:4</text>
           </block>
         </view>
-      </view>
-    </block>
-
-    <!-- Step 4 · Caption + Preview -->
-    <block wx:if="{{step === 3}}">
-      <view class="card">
-        <text class="label card-eyebrow">04 · CAPTION</text>
-        <text class="display card-title">气泡文案</text>
-        <text class="card-hint">显示在左侧白色对话气泡内</text>
-
-        <view class="cap-tabs">
-          <view class="cap-tab {{captionMode === 'preset' ? 'active' : ''}}" data-m="preset" bindtap="switchCaptionMode">
-            <text class="label">预设</text>
-          </view>
-          <view class="cap-tab {{captionMode === 'ai' ? 'active' : ''}}" data-m="ai" bindtap="switchCaptionMode">
-            <text class="label">AI 润色</text>
-          </view>
-          <view class="cap-tab {{captionMode === 'custom' ? 'active' : ''}}" data-m="custom" bindtap="switchCaptionMode">
-            <text class="label">自定义</text>
-          </view>
-        </view>
-
-        <block wx:if="{{captionMode === 'preset'}}">
-          <view class="preset-list">
-            <view wx:for="{{presets}}" wx:key="*this"
-                  class="preset-item {{caption === item ? 'active' : ''}}"
-                  data-c="{{item}}" bindtap="pickPreset">
-              <text>{{item}}</text>
-            </view>
-          </view>
-        </block>
-
-        <block wx:if="{{captionMode === 'ai'}}">
-          <input class="field" type="text" placeholder="孩子的兴趣/特点，如：画画 / 钢琴"
-                 placeholder-class="field-ph"
-                 value="{{aiKeyword}}" bindinput="onAiKeywordInput" maxlength="20"/>
-          <view class="ai-actions">
-            <view class="btn-mini tap {{aiLoading ? 'disabled' : ''}}" bindtap="generateCaption">
-              <text>{{aiLoading ? '生成中…' : '✦ 生成一句'}}</text>
-            </view>
-          </view>
-          <view wx:if="{{caption}}" class="ai-result">
-            <text class="label ai-result-l">已生成</text>
-            <text class="ai-result-t">{{caption}}</text>
-          </view>
-        </block>
-
-        <block wx:if="{{captionMode === 'custom'}}">
-          <textarea class="textarea" placeholder="自由输入一句话，30 字内"
-                    placeholder-class="field-ph"
-                    value="{{caption}}" bindinput="onCaptionInput"
-                    maxlength="40" auto-height/>
-          <text class="char-count">{{caption.length}} / 40</text>
-        </block>
       </view>
 
       <!-- Preview canvas -->
@@ -168,7 +146,7 @@
       <text>下一步</text>
       <text class="btn-ember-icon">→</text>
     </view>
-    <view wx:if="{{step === 3}}" class="btn-ember tap {{caption && !rendering ? '' : 'disabled'}}" bindtap="onSavePoster">
+    <view wx:if="{{step === 3}}" class="btn-ember tap {{photo && caption && !rendering ? '' : 'disabled'}}" bindtap="onSavePoster">
       <text>{{rendering ? '处理中…' : '保存到相册'}}</text>
       <text class="btn-ember-icon">✦</text>
     </view>

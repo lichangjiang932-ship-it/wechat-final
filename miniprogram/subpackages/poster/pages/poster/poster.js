@@ -6,10 +6,10 @@ const i18n = require('../../../../utils/i18n');
 const themeMod = require('../../../../utils/theme');
 
 const STEP_DEFS = [
-  { key: 'name',    label: '姓名' },
-  { key: 'age',     label: '年龄' },
-  { key: 'photo',   label: '照片' },
-  { key: 'caption', label: '文案' },
+  { key: 'name',   label: '姓名' },
+  { key: 'age',    label: '年龄' },
+  { key: 'hobby',  label: '爱好' },
+  { key: 'photo',  label: '照片' },
 ];
 
 const PRESETS = [
@@ -38,10 +38,13 @@ Page({
     name: '',
     age: '',
     photo: '',
+    hobby: '',
     caption: '',
     captionMode: 'preset',
     aiKeyword: '',
     aiLoading: false,
+    polishLoading: false,
+    polishedOnce: false,
     presets: PRESETS,
     quickAges: QUICK_AGES,
     canNext: false,
@@ -95,7 +98,8 @@ Page({
   computeCanNext(d = this.data) {
     if (d.step === 0) return d.name.trim().length > 0;
     if (d.step === 1) return String(d.age).trim().length > 0 && Number(d.age) > 0;
-    if (d.step === 2) return !!d.photo;
+    if (d.step === 2) return !!(d.caption && d.caption.trim());
+    if (d.step === 3) return !!d.photo;
     return true;
   },
   refreshCanNext() {
@@ -103,15 +107,15 @@ Page({
   },
   nextStep() {
     if (!this.computeCanNext()) {
-      wx.showToast({ title: '请先完成本步', icon: 'none' });
+      const tip = this.data.step === 2 ? '请先生成或输入文案' : '请先完成本步';
+      wx.showToast({ title: tip, icon: 'none' });
       return;
     }
     const next = Math.min(this.data.step + 1, STEP_DEFS.length - 1);
     this.setData({ step: next }, () => {
       this.refreshCanNext();
       if (next === 3) {
-        // 进到预览步：默认选第一条预设
-        if (!this.data.caption) this.setData({ caption: PRESETS[0] });
+        // 进到照片步：开始预渲染海报（即使还没选照片也先画底版）
         wx.nextTick(() => this.renderPoster());
       }
     });
@@ -143,9 +147,55 @@ Page({
         const tempPath = res.tempFiles[0].tempFilePath;
         this.setData({ photo: tempPath });
         this.refreshCanNext();
+        // 选完照片立刻刷新预览
+        wx.nextTick(() => this.renderPoster());
       },
       fail: () => {},
     });
+  },
+
+  // ===== 爱好（DeepSeek 润色）=====
+  onHobbyInput(e) {
+    this.setData({ hobby: e.detail.value });
+  },
+  pickHobbyChip(e) {
+    const v = e.currentTarget.dataset.h;
+    this.setData({ hobby: v });
+  },
+  async polishHobby() {
+    const kw = (this.data.hobby || '').trim();
+    if (!kw) { wx.showToast({ title: '请先输入爱好', icon: 'none' }); return; }
+    if (this.data.polishLoading) return;
+    this.setData({ polishLoading: true });
+    try {
+      let caption = '';
+      try {
+        const res = await callFunction('ai', {
+          action: 'caption',
+          keyword: kw,
+          name: this.data.name,
+          age: this.data.age,
+        }, { silent: true });
+        if (res && res.caption) caption = String(res.caption).slice(0, 40);
+      } catch (_) { /* 降级 */ }
+      if (!caption) {
+        const templates = [
+          `热爱${kw}的小朋友，让${kw}成为成长里最亮的一束光。`,
+          `${kw}是 ${this.data.name || '我'} 的小宇宙，每一次都全力以赴。`,
+          `因为${kw}而闪闪发光的小孩子。`,
+        ];
+        caption = templates[Math.floor(Math.random() * templates.length)].slice(0, 40);
+      }
+      this.setData({ caption, polishedOnce: true });
+      this.refreshCanNext();
+      wx.showToast({ title: '已润色', icon: 'success' });
+    } finally {
+      this.setData({ polishLoading: false });
+    }
+  },
+  onCaptionEdit(e) {
+    this.setData({ caption: e.detail.value });
+    this.refreshCanNext();
   },
 
   // ===== 文案 =====
