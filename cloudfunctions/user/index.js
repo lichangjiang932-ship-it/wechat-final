@@ -33,8 +33,9 @@ function generateToken(openid) {
 }
 
 function getRandomEmoji() {
-  const emojis = ['🎨', '🖌️', '🎭', '🌟', '🌈', '🦄', '🐱', '🦊', '🐼', '🌻', '🎪', '🎸', '🎵', '🦋', '🌸'];
-  return emojis[Math.floor(Math.random() * emojis.length)];
+  // 字符头像池（默认头像，去除 emoji）
+  const avatars = ['M','I','A','O','S','E','C','妙','摄','艺','象','色','光','形','梦'];
+  return avatars[Math.floor(Math.random() * avatars.length)];
 }
 
 async function findUser(openid) {

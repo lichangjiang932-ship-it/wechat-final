@@ -20,10 +20,10 @@ async function safeAdd(collectionName, data) {
 
 // 默认工具配置
 const DEFAULT_TOOLS = [
-  { id: 'enhance', name: '画质提升', icon: '✨', desc: '提升图片分辨率和清晰度', btnText: '开始提升' },
-  { id: 'colorize', name: '线稿上色', icon: '🎨', desc: '给黑白线稿自动上色', btnText: '开始上色' },
-  { id: 'style', name: '风格迁移', icon: '🖼️', desc: '将照片转换为不同艺术风格', btnText: '开始转换' },
-  { id: 'extract', name: '线条提取', icon: '✏️', desc: '从照片中提取线条', btnText: '开始提取' },
+  { id: 'enhance', name: '画质提升', icon: '', desc: '提升图片分辨率和清晰度', btnText: '开始提升' },
+  { id: 'colorize', name: '线稿上色', icon: '', desc: '给黑白线稿自动上色', btnText: '开始上色' },
+  { id: 'style', name: '风格迁移', icon: '', desc: '将照片转换为不同艺术风格', btnText: '开始转换' },
+  { id: 'extract', name: '线条提取', icon: '', desc: '从照片中提取线条', btnText: '开始提取' },
 ];
 
 exports.main = async (event, context) => {

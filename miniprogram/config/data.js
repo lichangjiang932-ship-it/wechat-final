@@ -85,18 +85,18 @@ const RATIOS = [
 
 // ==================== 创作页 - 风格模板 ====================
 const STYLES = [
-  { id: 'real', name: '写实', emoji: '📷', prompt: ', photorealistic, ultra detailed, 8k, DSLR', color: '#C8B8A8' },
-  { id: 'anime', name: '动漫', emoji: '🌸', prompt: ', anime style, vibrant, cel shading', color: '#E8A8B8' },
-  { id: 'oil', name: '油画', emoji: '🎨', prompt: ', oil painting, rich textures, brushstrokes', color: '#D4A878' },
-  { id: 'watercolor', name: '水彩', emoji: '💧', prompt: ', watercolor, soft flowing, delicate', color: '#88B8C8' },
-  { id: 'sketch', name: '素描', emoji: '✏️', prompt: ', pencil sketch, detailed linework', color: '#A8A8A8' },
-  { id: 'chinese', name: '国风', emoji: '🎋', prompt: ', Chinese ink painting, traditional', color: '#8EAD7A' },
-  { id: 'cyber', name: '赛博', emoji: '🌃', prompt: ', cyberpunk, neon, futuristic', color: '#6878C8' },
-  { id: '3d', name: '3D', emoji: '🔮', prompt: ', 3D render, octane, cinematic lighting', color: '#A88BC8' },
-  { id: 'clay', name: '黏土', emoji: '🧸', prompt: ', clay render, cute, soft', color: '#C8A898' },
-  { id: 'pixel', name: '像素', emoji: '👾', prompt: ', pixel art, 16-bit, retro', color: '#78C8A8' },
-  { id: 'comic', name: '漫画', emoji: '💥', prompt: ', comic book, bold lines, pop art', color: '#C8888C' },
-  { id: 'fantasy', name: '梦幻', emoji: '✨', prompt: ', dreamy, ethereal, pastel', color: '#C8A8D4' },
+  { id: 'real', name: '写实', emoji: '', prompt: ', photorealistic, ultra detailed, 8k, DSLR', color: '#C8B8A8' },
+  { id: 'anime', name: '动漫', emoji: '', prompt: ', anime style, vibrant, cel shading', color: '#E8A8B8' },
+  { id: 'oil', name: '油画', emoji: '', prompt: ', oil painting, rich textures, brushstrokes', color: '#D4A878' },
+  { id: 'watercolor', name: '水彩', emoji: '', prompt: ', watercolor, soft flowing, delicate', color: '#88B8C8' },
+  { id: 'sketch', name: '素描', emoji: '', prompt: ', pencil sketch, detailed linework', color: '#A8A8A8' },
+  { id: 'chinese', name: '国风', emoji: '', prompt: ', Chinese ink painting, traditional', color: '#8EAD7A' },
+  { id: 'cyber', name: '赛博', emoji: '', prompt: ', cyberpunk, neon, futuristic', color: '#6878C8' },
+  { id: '3d', name: '3D', emoji: '', prompt: ', 3D render, octane, cinematic lighting', color: '#A88BC8' },
+  { id: 'clay', name: '黏土', emoji: '', prompt: ', clay render, cute, soft', color: '#C8A898' },
+  { id: 'pixel', name: '像素', emoji: '', prompt: ', pixel art, 16-bit, retro', color: '#78C8A8' },
+  { id: 'comic', name: '漫画', emoji: '', prompt: ', comic book, bold lines, pop art', color: '#C8888C' },
+  { id: 'fantasy', name: '梦幻', emoji: '', prompt: ', dreamy, ethereal, pastel', color: '#C8A8D4' },
 ];
 
 // ==================== 创作页 - 快捷提示词 ====================

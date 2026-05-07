@@ -182,7 +182,7 @@ Page({
   onAbout() {
     wx.showModal({
       title: '关于照片工坊',
-      content: '照片工坊 v2.0\n\n一款温暖质感的 AI 照片处理小程序。\n\n✨ AI 写真\n✨ 证件照制作\n✨ 风格迁移\n✨ 老照片修复\n\n© 2026 照片工坊团队',
+      content: '妙摄 Miaosec v2.0\n\n一款温暖质感的 AI 图像创作小程序。\n\n· AI 写真\n· 证件照制作\n· 风格迁移\n· 老照片修复\n\n© 2026 妙摄团队',
       showCancel: false,
     });
   },
