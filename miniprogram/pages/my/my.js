@@ -1,51 +1,124 @@
 // pages/my/my.js - 我的
 const { callFunction, checkLogin } = require('../../utils/cloud');
 const { computeNavBar, formatDate } = require('../../utils/common');
+const i18n = require('../../utils/i18n');
+const themeMod = require('../../utils/theme');
 
 Page({
   data: {
     userInfo: null,
-    isVip: false,
-    vipExpireTime: null,
-    stats: { createCount: 0, favorites: 0, shares: 0 },
-    menuItems: [
-      { id: 'history', icon: '📸', name: '我的作品' },
-      { id: 'favorites', icon: '❤️', name: '我的收藏' },
-      { id: 'vip', icon: '👑', name: '开通会员' },
-      { id: 'settings', icon: '⚙️', name: '设置' },
-      { id: 'help', icon: '💬', name: '帮助与反馈' },
-    ],
+    usageInfo: { isVip: false, limit: 5, used: 0 },
+    creationsCount: 0,
+    favoritesCount: 0,
+    likesCount: 0,
+    sharedCount: 0,
+    downloadsCount: 0,
+    viewsText: '0',
+    memberDays: 1,
+    handle: 'guest',
     navBarHeight: 44,
     statusBarHeight: 20,
     showLoginPopup: false,
+    showSettingsSheet: false,
     tempAvatar: '',
     tempNickName: '',
+    lang: 'zh',
+    theme: 'dark',
+    themeClass: 'theme-dark',
+    i18n: {},
+  },
+
+  formatViews(n) {
+    if (!n || n < 1000) return String(n || 0);
+    if (n < 10000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return (n / 10000).toFixed(1).replace(/\.0$/, '') + 'w';
+  },
+
+  deriveHandle(nick) {
+    if (!nick) return 'guest';
+    const ascii = String(nick).toLowerCase().replace(/[^a-z0-9]/g, '');
+    return ascii || 'user';
   },
 
   onLoad() {
     const { navBarHeight, statusBarHeight } = computeNavBar();
-    this.setData({ navBarHeight, statusBarHeight });
+    const lang = i18n.getLang();
+    const theme = themeMod.getTheme();
+    this.setData({
+      navBarHeight,
+      statusBarHeight,
+      lang,
+      theme,
+      themeClass: themeMod.themeClass(theme),
+      i18n: i18n.pack(lang),
+    });
     if (checkLogin()) this.loadUserInfo();
   },
 
   onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 4 });
+    }
+    // sync current theme/lang (they may have been changed elsewhere)
+    const lang = i18n.getLang();
+    const theme = themeMod.getTheme();
+    if (lang !== this.data.lang || theme !== this.data.theme) {
+      this.setData({ lang, theme, themeClass: themeMod.themeClass(theme), i18n: i18n.pack(lang) });
+    }
     if (checkLogin()) this.loadUserInfo();
+  },
+
+  // ===== Settings sheet =====
+  openSettingsSheet() { this.setData({ showSettingsSheet: true }); },
+  closeSettingsSheet() { this.setData({ showSettingsSheet: false }); },
+
+  pickLang(e) {
+    const v = e.currentTarget.dataset.v;
+    i18n.setLang(v);
+    this.setData({ lang: v, i18n: i18n.pack(v) });
+    wx.vibrateShort({ type: 'light' });
+  },
+
+  pickTheme(e) {
+    const v = e.currentTarget.dataset.v;
+    themeMod.setTheme(v);
+    this.setData({ theme: v, themeClass: themeMod.themeClass(v) });
+    wx.vibrateShort({ type: 'light' });
   },
 
   async loadUserInfo() {
     try {
       const user = wx.getStorageSync('userInfo') || null;
-      this.setData({ userInfo: user });
-      const res = await callFunction('user', { action: 'getInfo' });
+      const loginTime = user && user.loginTime ? user.loginTime : (wx.getStorageSync('firstLoginTime') || Date.now());
+      const memberDays = Math.max(1, Math.floor((Date.now() - loginTime) / 86400000));
+      const favoritesCount = (wx.getStorageSync('myFavorites') || []).length;
+      const likesCount = (wx.getStorageSync('myLikes') || []).length;
+      const localWorks = wx.getStorageSync('myWorks') || [];
+      const downloadsCount = (wx.getStorageSync('myDownloads') || []).length;
+      this.setData({
+        userInfo: user,
+        memberDays,
+        favoritesCount,
+        likesCount,
+        creationsCount: localWorks.length,
+        downloadsCount,
+        handle: this.deriveHandle(user && user.nickName),
+      });
+
+      const res = await callFunction('user', { action: 'getInfo' }, { silent: true });
       if (res) {
+        const isVip = !!(res.vipLevel && res.vipExpireTime > Date.now());
         this.setData({
-          isVip: res.vipLevel && res.vipExpireTime > Date.now(),
-          vipExpireTime: res.vipExpireTime,
-          stats: { createCount: res.createCount || 0, favorites: res.favorites || 0, shares: res.shares || 0 },
+          usageInfo: { isVip, limit: res.dailyLimit || 5, used: res.dailyUsed || 0 },
+          creationsCount: res.createCount || localWorks.length,
+          favoritesCount: res.favorites || favoritesCount,
+          likesCount: res.likes || likesCount,
+          sharedCount: res.shareCount || 0,
+          viewsText: this.formatViews(res.viewCount || 0),
         });
       }
     } catch (err) {
-      console.error('加载用户信息失败:', err.message);
+      console.warn('加载用户信息失败:', err.message);
     }
   },
 
@@ -110,6 +183,9 @@ Page({
       };
       
       wx.setStorageSync('userInfo', userInfo);
+      if (!wx.getStorageSync('firstLoginTime')) {
+        wx.setStorageSync('firstLoginTime', Date.now());
+      }
       if (cloudUserInfo?.token) {
         wx.setStorageSync('token', cloudUserInfo.token);
       }
@@ -134,10 +210,10 @@ Page({
     const id = e.currentTarget.dataset.id;
     wx.vibrateShort({ type: 'light' });
     const routes = {
-      history: '/pages/history/history',
+      history: '/subpackages/history/pages/history/history',
       favorites: '/pages/favorites/favorites',
-      vip: '/pages/member/member',
-      settings: '/pages/settings/settings'
+      vip: '/subpackages/member/pages/member/member',
+      settings: '/subpackages/settings/pages/settings/settings'
     };
     if (routes[id]) {
       wx.navigateTo({ url: routes[id] });
@@ -178,6 +254,24 @@ Page({
         }
       });
     }
+  },
+
+  goHistory()   { wx.navigateTo({ url: '/subpackages/history/pages/history/history' }); },
+  goFavorites() { wx.switchTab({ url: '/pages/favorites/favorites' }); },
+  goLikes()     { wx.navigateTo({ url: '/pages/likes/likes' }); },
+  goDownloads() { wx.navigateTo({ url: '/subpackages/history/pages/history/history?tab=downloads' }); },
+  goUpload()    { wx.navigateTo({ url: '/pages/upload/upload' }); },
+  goPoster()    { wx.navigateTo({ url: '/subpackages/poster/pages/poster/poster' }); },
+  openMember()  { wx.navigateTo({ url: '/subpackages/member/pages/member/member' }); },
+  goSettings()  { wx.navigateTo({ url: '/subpackages/settings/pages/settings/settings' }); },
+
+  chooseLanguage() {
+    wx.showActionSheet({
+      itemList: ['中文', 'English'],
+      success: (r) => {
+        if (r.tapIndex === 1) wx.showToast({ title: 'English coming soon', icon: 'none' });
+      },
+    });
   },
 
   onShareAppMessage() {

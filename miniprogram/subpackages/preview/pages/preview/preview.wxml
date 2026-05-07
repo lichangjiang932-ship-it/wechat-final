@@ -1,82 +1,91 @@
-<!-- 图片详情页 -->
-<view class="page">
-  
-  <!-- 自定义导航栏组件 -->
-  <nav-bar 
-    title="作品详情"
-    show-back="{{true}}"
-    bg-color="rgba(0, 0, 0, 0.8)"
-    title-color="#fff"
-  >
-    <view class="nav-favorite" bindtap="onFavorite">
-      <text class="favorite-icon">{{isFavorite ? '❤️' : '🤍'}}</text>
-    </view>
-  </nav-bar>
+<!-- Preview · Image detail dark -->
+<view class="page {{themeClass}}">
 
-  <!-- 图片区域 -->
-  <view class="image-container">
-    <image 
-      class="preview-image" 
-      src="{{imageUrl}}" 
-      mode="widthFix"
-      bindtap="onImageTap"
-      bindload="onImageLoad"
-    />
-    <view class="image-loading" wx:if="{{!imageLoaded}}">
-      <view class="spinner rotate"></view>
-      <text class="loading-text">图片加载中...</text>
-    </view>
-  </view>
-
-  <!-- 底部操作栏 -->
-  <view class="action-bar safe-bottom">
-    <view class="action-info">
-      <text class="action-title">{{title || '作品'}}</text>
-      <text class="action-likes" wx:if="{{likes}}">{{likes}} 赞</text>
-    </view>
-    <view class="action-btns">
-      <view class="action-btn action-btn-secondary" bindtap="onFavorite">
-        <text class="btn-icon">{{isFavorite ? '❤️' : '🤍'}}</text>
-        <text class="btn-text">{{isFavorite ? '已收藏' : '收藏'}}</text>
+  <!-- Nav bar -->
+  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner" style="min-height: 44px;">
+      <view class="nav-back tap" bindtap="goBack">
+        <view class="ic ic-back nav-back-icon"/>
       </view>
-      <view class="action-btn action-btn-secondary" bindtap="onSaveToAlbum">
-        <text class="btn-icon">💾</text>
-        <text class="btn-text">保存</text>
-      </view>
-      <view class="action-btn action-btn-secondary" bindtap="onShareTap">
-        <text class="btn-icon">🔗</text>
-        <text class="btn-text">分享</text>
-      </view>
-      <view class="action-btn action-btn-primary" bindtap="onMakeSame">
-        <text class="btn-icon">✨</text>
-        <text class="btn-text">做同款</text>
+      <text class="label-mono nav-title">PREVIEW</text>
+      <view class="nav-actions">
+        <view class="nav-action tap" bindtap="onMore">
+          <view class="ic ic-more" style="background-color: var(--cream-3); width:32rpx; height:32rpx;"/>
+        </view>
       </view>
     </view>
   </view>
 
-  <!-- 分享菜单 -->
-  <view class="popup-mask {{showShareMenu ? '' : 'hidden'}}" bindtap="closeShareMenu"></view>
+  <!-- Image area -->
+  <scroll-view scroll-y class="image-scroll" style="padding-top: {{navBarHeight}}px;">
+    <view class="image-wrap">
+      <image wx:if="{{imageUrl}}" class="preview-img" src="{{imageUrl}}" mode="widthFix"
+             bindtap="onImageTap" bindload="onImageLoad" binderror="onImageError"/>
+      <view class="image-ph" wx:else>
+        <view class="spinner"/>
+      </view>
+      <view class="image-loading" wx:if="{{imageUrl && !imageLoaded}}">
+        <view class="spinner"/>
+      </view>
+    </view>
+
+    <!-- Info section -->
+    <view class="info-section" wx:if="{{title || prompt}}">
+      <view class="info-header">
+        <text class="display info-title">{{title || '作品'}}</text>
+        <view class="info-meta" wx:if="{{style || createdAt}}">
+          <text class="label-mono info-meta-item" wx:if="{{style}}">{{style}}</text>
+          <text class="label-mono info-meta-item" wx:if="{{createdAt}}">{{createdAt}}</text>
+        </view>
+      </view>
+      <view class="info-prompt" wx:if="{{prompt}}" bindtap="onCopyPrompt">
+        <text class="body info-prompt-text">{{prompt}}</text>
+        <text class="label-mono info-prompt-copy">COPY</text>
+      </view>
+    </view>
+
+    <view class="safe-bottom"/>
+  </scroll-view>
+
+  <!-- Bottom action bar -->
+  <view class="action-bar">
+    <view class="action-left">
+      <view class="action-btn tap" bindtap="onLike">
+        <view class="ic ic-heart {{isLiked ? 'active' : ''}}" style="background-color: {{isLiked ? 'var(--ember)' : 'var(--cream-3)'}}; width:36rpx; height:36rpx;"/>
+        <text class="label-mono action-count">{{saves}}</text>
+      </view>
+      <view class="action-btn tap" bindtap="onFavorite">
+        <view class="ic ic-bookmark {{isFavorite ? 'active' : ''}}" style="background-color: {{isFavorite ? 'var(--ember)' : 'var(--cream-3)'}}; width:36rpx; height:36rpx;"/>
+      </view>
+      <view class="action-btn tap" bindtap="onSaveToAlbum">
+        <view class="ic ic-download" style="background-color: var(--cream-3); width:36rpx; height:36rpx;"/>
+      </view>
+    </view>
+    <view class="action-right">
+      <view class="btn-primary tap" bindtap="onMakeSame">
+        <text class="btn-primary-text">做同款</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Share menu -->
+  <view class="popup-mask {{showShareMenu ? '' : 'hidden'}}" bindtap="closeShareMenu"/>
   <view class="popup-sheet {{showShareMenu ? 'show' : ''}}">
-    <view class="popup-handle"></view>
-    <text class="popup-title">分享作品</text>
+    <view class="popup-handle"/>
+    <text class="display popup-title">分享作品</text>
     <view class="share-options">
-      <button class="share-btn" open-type="share" bindtap="closeShareMenu">
-        <view class="share-icon">💬</view>
-        <text class="share-name">发给好友</text>
+      <button class="share-btn tap" open-type="share" bindtap="closeShareMenu">
+        <view class="share-icon-wrap">
+          <view class="ic ic-share" style="background-color: var(--cream-1); width:40rpx; height:40rpx;"/>
+        </view>
+        <text class="label-mono share-label">发送</text>
       </button>
-      <view class="share-btn" bindtap="onSaveToAlbum">
-        <view class="share-icon">🖼️</view>
-        <text class="share-name">保存图片</text>
+      <view class="share-btn tap" bindtap="onSaveToAlbum">
+        <view class="share-icon-wrap">
+          <view class="ic ic-download" style="background-color: var(--cream-1); width:40rpx; height:40rpx;"/>
+        </view>
+        <text class="label-mono share-label">保存</text>
       </view>
     </view>
   </view>
-
-  <!-- 成功提示组件 -->
-  <success-toast 
-    visible="{{showSuccessToast}}"
-    title="{{successTitle}}"
-    desc="{{successDesc}}"
-    icon-type="{{successIcon}}"
-    bind:close="hideSuccessToast"
-  />
 </view>

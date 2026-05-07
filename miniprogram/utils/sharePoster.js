@@ -19,10 +19,11 @@ async function getMiniProgramCode(scene = '', page = 'pages/index/index') {
       },
     });
 
-    if (result?.code === 0 && result.fileID) {
+    const resData = result?.result || {};
+    if (resData.code === 0 && resData.fileID) {
       // 获取临时链接
       const tempRes = await wx.cloud.getTempFileURL({
-        fileList: [result.fileID],
+        fileList: [resData.fileID],
       });
       return tempRes.fileList[0]?.tempFileURL || '';
     }

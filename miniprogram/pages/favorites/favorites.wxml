@@ -1,54 +1,63 @@
-<!-- 我的收藏页面 -->
-<view class="page">
-  <!-- 导航栏 -->
+<!-- Favorites · Dark editorial -->
+<view class="page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
+
   <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
-    <view class="nav-inner">
-      <view class="nav-back" bindtap="goBack">
-        <text class="back-icon">‹</text>
-      </view>
-      <text class="nav-title">我的收藏</text>
-      <text class="nav-count" wx:if="{{favorites.length > 0}}">{{favorites.length}}</text>
+    <view class="nav-inner" style="min-height: 44px;">
+      <view wx:if="{{showBack}}" class="ic ic-back tap" style="background-color: var(--cream-2);" bindtap="goBack"/>
+      <view wx:else style="width: 44rpx;"/>
+      <text class="label-mono nav-title">LIBRARY</text>
+      <view style="width: 44rpx;"/>
     </view>
   </view>
 
-  <!-- 内容区域 -->
-  <scroll-view
-    scroll-y
-    class="content"
-    style="padding-top: calc({{navBarHeight}}px + 16rpx);"
-    refresher-enabled
-    refresher-triggered="{{refreshing}}"
-    bindrefresherrefresh="onRefresh"
-  >
-    <!-- 加载中 -->
-    <view class="loading-state" wx:if="{{loading && favorites.length === 0}}">
-      <view class="spinner"></view>
-      <text>加载中...</text>
+  <scroll-view scroll-y class="content" style="padding-top: calc({{navBarHeight}}px + {{statusBarHeight}}px);"
+               refresher-enabled refresher-triggered="{{refreshing}}"
+               bindrefresherrefresh="onRefresh">
+
+    <!-- Editorial header — gives breathing room below the nav -->
+    <view class="head" wx:if="{{favorites.length > 0}}">
+      <text class="display d-big">你的</text>
+      <text class="display display-italic d-big">图书馆</text>
     </view>
 
-    <!-- 空状态 -->
-    <view class="empty-state" wx:elif="{{empty}}">
-      <text class="empty-icon">❤️</text>
-      <text class="empty-title">暂无收藏</text>
-      <text class="empty-desc">去发现页寻找喜欢的作品吧</text>
-      <view class="empty-btn" bindtap="goDiscover">去发现</view>
+    <!-- Empty state -->
+    <view class="empty" wx:if="{{!loading && favorites.length === 0}}">
+      <view class="ic ic-bookmark" style="background-color: var(--cream-4); width:80rpx;height:80rpx;"/>
+      <text class="display empty-title">图书馆还没有作品</text>
+      <text class="label-mono empty-sub">创作或收藏，都会出现在这里</text>
+      <view class="btn-ghost tap" style="margin-top: 24rpx; width: 240rpx;" bindtap="goDiscover">去发现 →</view>
     </view>
 
-    <!-- 收藏列表 -->
-    <block wx:else>
-      <view class="favorites-grid">
-        <view class="fav-item" wx:for="{{favorites}}" wx:key="id">
-          <image class="fav-image" src="{{item.url}}" mode="aspectFill" lazy-load bindtap="onPreview" data-index="{{index}}"/>
-          <view class="fav-info">
-            <text class="fav-title">{{item.title || '作品'}}</text>
+    <view class="waterfall" wx:if="{{favorites.length > 0}}">
+      <view class="water-col">
+        <view class="work-card tap" wx:for="{{leftCol}}" wx:key="id" bindtap="onPreview" data-item="{{item}}">
+          <view class="work-cover ratio-{{item.ratioClass}}">
+            <image wx:if="{{item.cover || item.url}}" class="work-img" src="{{item.cover || item.url}}" mode="aspectFill" lazy-load/>
+            <view wx:else class="work-img ph ph-fog"/>
           </view>
-          <view class="fav-actions">
-            <view class="action-btn primary" bindtap="onMakeSame" data-item="{{item}}">做同款</view>
-            <view class="action-btn" bindtap="onRemove" data-id="{{item.id}}">取消</view>
+          <view class="work-body">
+            <text class="work-topic">{{item.topicText}}</text>
+            <text class="work-author">{{item.authorText}}</text>
           </view>
         </view>
       </view>
-      <view class="list-bottom">~ 共 {{favorites.length}} 个收藏 ~</view>
-    </block>
+      <view class="water-col">
+        <view class="work-card tap" wx:for="{{rightCol}}" wx:key="id" bindtap="onPreview" data-item="{{item}}">
+          <view class="work-cover ratio-{{item.ratioClass}}">
+            <image wx:if="{{item.cover || item.url}}" class="work-img" src="{{item.cover || item.url}}" mode="aspectFill" lazy-load/>
+            <view wx:else class="work-img ph ph-fog"/>
+          </view>
+          <view class="work-body">
+            <text class="work-topic">{{item.topicText}}</text>
+            <text class="work-author">{{item.authorText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="loading-row" wx:if="{{loading}}">
+      <view class="spinner"/>
+    </view>
+    <view class="dock-spacer"/>
   </scroll-view>
 </view>

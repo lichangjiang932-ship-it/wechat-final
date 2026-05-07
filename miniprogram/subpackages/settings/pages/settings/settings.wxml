@@ -1,5 +1,5 @@
 <!-- 设置页面 -->
-<view class="page">
+<view class="page {{themeClass}}">
   
   <!-- 自定义导航栏组件 -->
   <nav-bar 

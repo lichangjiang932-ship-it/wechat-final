@@ -21,7 +21,7 @@ const logger = {
 
 // ==================== 云开发配置 ====================
 const CLOUD_CONFIG = {
-  DEFAULT_ENV: 'cloud1-7g56gaj702c99bfd',
+  DEFAULT_ENV: 'cloud1-d8glhp7pdcd3fffba',
   STORAGE_KEY: {
     CLOUD_ENV: 'CLOUD_ENV',
     USER_INFO: 'userInfo',

@@ -1,77 +1,110 @@
-<!-- 会员页面 -->
-<view class="page">
-  
-  <!-- 自定义导航栏组件 -->
-  <nav-bar 
-    title="开通会员"
-    show-back="{{true}}"
-  />
+<!-- Member · Editorial subscription -->
+<view class="page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
+  <scroll-view scroll-y class="scroll">
 
-  <!-- 内容区域 -->
-  <view class="content" style="padding-top: {{navBarHeight}}px;">
-    
-    <!-- 用户信息 -->
-    <view class="member-card">
-      <view class="member-row">
-        <image class="member-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"/>
-        <view class="member-info">
-          <text class="member-name">{{userInfo.nickName || '未登录'}}</text>
-          <text class="member-badge {{vipLevel}}">{{vipLevel === 'free' ? '普通用户' : '会员'}}</text>
-          <text class="member-expire" wx:if="{{vipExpireTime}}">{{vipExpireTime}} 到期</text>
-        </view>
+    <!-- Header -->
+    <view class="head" style="padding-top: {{statusBarHeight}}px;">
+      <view class="head-row">
+        <view class="ic ic-back tap" bindtap="goBack"/>
+        <text class="label head-eyebrow">{{i18n['member.eyebrow']}}</text>
+        <view class="head-spacer"/>
+      </view>
+
+      <!-- Display title — runs two lines, second is italic -->
+      <view class="head-title">
+        <text class="display d-big">{{i18n['member.title.1']}}</text>
+        <text class="display display-italic d-big">{{i18n['member.title.2']}}</text>
       </view>
     </view>
 
-    <!-- 套餐选择 -->
-    <view class="plan-section">
-      <view class="section-title">选择套餐</view>
-      <view class="plan-cards">
-        <view class="plan {{selectedPlan === 'month' ? 'active' : ''}}" bindtap="selectPlan" data-plan="month">
-          <view class="plan-header">
-            <text class="plan-name">月卡</text>
-            <text class="plan-price">¥19.9<text class="plan-unit">/月</text></text>
+    <!-- Status strip -->
+    <view class="status">
+      <view class="status-dot"/>
+      <text class="label status-name">{{userInfo.nickName || '—'}}</text>
+      <text class="label status-sep">·</text>
+      <text class="label status-badge {{vipLevel !== 'free' ? 'on' : ''}}">
+        {{vipLevel === 'free' ? i18n['member.status.free'] : i18n['member.status.vip']}}
+      </text>
+      <text wx:if="{{vipExpireTime}}" class="label status-expire">{{vipExpireTime}} {{i18n['member.status.expire']}}</text>
+    </view>
+
+    <!-- Plans -->
+    <view class="sec">
+      <view class="sec-head">
+        <view class="sec-title-row">
+          <text class="display sec-title">{{i18n['member.sec.plan']}}</text>
+          <text class="display display-italic sec-title-it">{{i18n['member.sec.plan.it']}}</text>
+        </view>
+        <text class="eyebrow sec-count">02</text>
+      </view>
+
+      <view class="plan-grid">
+        <!-- Month plan -->
+        <view class="plan-card tap {{selectedPlan === 'month' ? 'on' : ''}}" bindtap="selectPlan" data-plan="month">
+          <text class="label plan-en">{{i18n['member.plan.monthly']}}</text>
+          <text class="display plan-n">{{i18n['member.plan.month']}}</text>
+          <view class="plan-price-row">
+            <text class="display plan-price">¥19.9</text>
+            <text class="plan-unit">{{i18n['member.plan.unit.month']}}</text>
           </view>
-          <text class="plan-original">原价 ¥29.9</text>
+          <text class="label plan-foot">{{i18n['member.plan.month.original']}}</text>
         </view>
-        <view class="plan {{selectedPlan === 'year' ? 'active' : ''}}" bindtap="selectPlan" data-plan="year">
-          <view class="plan-badge">超值</view>
-          <view class="plan-header">
-            <text class="plan-name">年卡</text>
-            <text class="plan-price">¥199<text class="plan-unit">/年</text></text>
+
+        <!-- Year plan -->
+        <view class="plan-card tap {{selectedPlan === 'year' ? 'on' : ''}}" bindtap="selectPlan" data-plan="year">
+          <view class="plan-badge">{{i18n['member.plan.year.badge']}}</view>
+          <text class="label plan-en">{{i18n['member.plan.annual']}}</text>
+          <text class="display plan-n">{{i18n['member.plan.year']}}</text>
+          <view class="plan-price-row">
+            <text class="display plan-price">¥199</text>
+            <text class="plan-unit">{{i18n['member.plan.unit.year']}}</text>
           </view>
-          <text class="plan-original">月均 ¥16.6</text>
+          <text class="label plan-foot">{{i18n['member.plan.year.avg']}}</text>
         </view>
       </view>
     </view>
 
-    <!-- 权益说明 -->
-    <view class="perks-section">
-      <view class="section-title">会员权益</view>
-      <view class="perks-list">
-        <view class="perk-item">
-          <text class="perk-icon">♾️</text>
-          <text class="perk-text">无限次使用 AI 生成</text>
+    <!-- Perks — editorial numbered list -->
+    <view class="sec">
+      <view class="sec-head">
+        <view class="sec-title-row">
+          <text class="display sec-title">{{i18n['member.sec.perks']}}</text>
+          <text class="display display-italic sec-title-it">{{i18n['member.sec.perks.it']}}</text>
         </view>
-        <view class="perk-item">
-          <text class="perk-icon">📸</text>
-          <text class="perk-text">高清画质下载</text>
-        </view>
-        <view class="perk-item">
-          <text class="perk-icon">🎨</text>
-          <text class="perk-text">解锁全部风格模板</text>
-        </view>
-        <view class="perk-item">
-          <text class="perk-icon">⚡</text>
-          <text class="perk-text">优先排队处理</text>
+        <text class="eyebrow sec-count">04</text>
+      </view>
+
+      <view class="perk-list">
+        <view class="perk-row" wx:for="{{perks}}" wx:key="n">
+          <text class="display display-italic perk-num">0{{item.n}}</text>
+          <view class="perk-body">
+            <text class="display perk-t">{{i18n[item.titleKey]}}</text>
+            <text class="label perk-meta">{{i18n[item.subKey]}}</text>
+          </view>
+          <view class="perk-dot"/>
         </view>
       </view>
     </view>
-  </view>
 
-  <!-- 底部按钮 -->
-  <view class="bottom-bar safe-bottom">
-    <view class="btn-primary" bindtap="subscribe">
-      <text>立即开通 {{selectedPlan === 'month' ? '¥19.9/月' : '¥199/年'}}</text>
+    <!-- Bottom breathing room for the sticky CTA -->
+    <view class="cta-spacer"/>
+  </scroll-view>
+
+  <!-- Sticky bottom CTA -->
+  <view class="cta-dock">
+    <view class="cta-row">
+      <view class="cta-total">
+        <text class="label cta-total-l">{{i18n['member.total']}}</text>
+        <view class="cta-total-n-row">
+          <text class="display cta-total-n">¥{{selectedPlan === 'month' ? '19.9' : '199'}}</text>
+          <text class="cta-total-unit">{{selectedPlan === 'month' ? i18n['member.plan.unit.month'] : i18n['member.plan.unit.year']}}</text>
+        </view>
+      </view>
+      <view class="cta-btn tap" bindtap="subscribe">
+        <text class="cta-btn-t">{{i18n['member.cta']}}</text>
+        <text class="cta-btn-arrow">→</text>
+      </view>
     </view>
+    <text class="label cta-sub">{{i18n['member.cta.sub']}} · {{i18n['member.agreement']}}</text>
   </view>
 </view>

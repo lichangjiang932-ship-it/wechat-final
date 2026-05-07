@@ -1,125 +1,144 @@
-// subpackages/history/pages/history/history.js - 我的作品页面
+// subpackages/history/pages/history/history.js — 我的作品（dark editorial）
 const { callFunction, checkLogin } = require('../../../../utils/cloud');
-const { formatTime, saveImageToAlbum } = require('../../../../utils/common');
+const { computeNavBar, formatTime, saveImageToAlbum } = require('../../../../utils/common');
+const themeMod = require('../../../../utils/theme');
 
-// 获取全局导航栏高度
-function getNavBarHeight() {
-  try {
-    const app = getApp();
-    return app.globalData.navBarHeight || 88;
-  } catch (e) {
-    return 88;
-  }
-}
+// Only these schemes are renderable by <image>. Stale/relative paths get filtered out.
+const VALID_URL = /^(https?:|cloud:|wxfile:|http:|\/\/|data:)/i;
+const isRenderable = (u) => typeof u === 'string' && VALID_URL.test(u);
 
 Page({
   data: {
-    navBarHeight: 88,
+    navBarHeight: 44,
+    statusBarHeight: 20,
     works: [],
+    leftCol: [],
+    rightCol: [],
     loading: false,
     refreshing: false,
     empty: false,
+    theme: 'dark',
+    themeClass: 'theme-dark',
     _lastLoadTime: 0,
   },
 
   onLoad() {
-    const navBarHeight = getNavBarHeight();
-    this.setData({ navBarHeight });
+    const { navBarHeight, statusBarHeight } = computeNavBar();
+    const theme = themeMod.getTheme();
+    this.setData({
+      navBarHeight, statusBarHeight,
+      theme, themeClass: themeMod.themeClass(theme),
+    });
     this.loadWorks();
   },
 
   onShow() {
-    // 3秒内不重复加载
+    const theme = themeMod.getTheme();
+    if (theme !== this.data.theme) {
+      this.setData({ theme, themeClass: themeMod.themeClass(theme) });
+    }
     const now = Date.now();
-    if (now - this._lastLoadTime < 3000) return;
-    this._lastLoadTime = now;
+    if (now - this.data._lastLoadTime < 3000) return;
+    this.setData({ _lastLoadTime: now });
     this.loadWorks();
   },
 
-  // 下拉刷新
   onRefresh() {
     this.setData({ refreshing: true });
     this.loadWorks();
   },
 
-  // 加载作品（本地 + 云端合并）
   async loadWorks() {
     this.setData({ loading: true });
 
-    // 先加载本地数据
-    let works = wx.getStorageSync('myWorks') || [];
-    
-    this.setData({ works, loading: false, refreshing: false });
-    
-    // 空状态
-    this.setData({ empty: works.length === 0 });
+    // Local seed — keep all valid entries
+    let local = (wx.getStorageSync('myWorks') || []).filter(w => {
+      if (!w) return false;
+      // Keep if has a renderable url, a fileID, or any valid identifier
+      return isRenderable(w.url) || (w.fileID && typeof w.fileID === 'string') || w.id;
+    });
+    // Persist cleaned data back
+    wx.setStorageSync('myWorks', local);
+    this._apply(local);
 
-    // 如果已登录，同步云端数据
-    if (checkLogin()) {
-      try {
-        const cloudData = await callFunction('tools', { action: 'getWorks', limit: 100 }, { silent: true });
-        if (cloudData && cloudData.length > 0) {
-          const cloudWorks = cloudData.map(item => ({
-            id: item.createTime,
-            cloudId: item._id,
-            fileID: item.fileID || item.url,
-            url: item.url,
-            title: item.title,
-            prompt: item.prompt,
-            style: item.style,
-            time: formatTime(item.createTime),
-            needResolve: !item.url || item.url.startsWith('cloud://'),
-          }));
+    if (!checkLogin()) {
+      this.setData({ loading: false, refreshing: false });
+      return;
+    }
 
-          // 合并并去重
-          const merged = [...works];
-          cloudWorks.forEach(cloudItem => {
-            const key = cloudItem.cloudId || cloudItem.fileID || cloudItem.url;
-            const matchedIndex = merged.findIndex(localItem => (localItem.cloudId || localItem.fileID || localItem.url) === key);
-            if (matchedIndex === -1) {
-              merged.push(cloudItem);
-            } else {
-              merged[matchedIndex] = { ...merged[matchedIndex], cloudId: cloudItem.cloudId };
-            }
-          });
+    try {
+      const cloud = await callFunction('tools', { action: 'getWorks', limit: 100 }, { silent: true });
+      const cloudWorks = (Array.isArray(cloud) ? cloud : []).map(item => ({
+        id: item.createTime || item._id,
+        cloudId: item._id,
+        fileID: item.fileID || (item.url && item.url.startsWith('cloud://') ? item.url : ''),
+        url: item.url,
+        title: item.title || item.style || '',
+        prompt: item.prompt,
+        style: item.style,
+        time: formatTime(item.createTime),
+        needResolve: !item.url || (item.url && item.url.startsWith('cloud://')),
+      }));
 
-          merged.sort((a, b) => b.id - a.id);
-          this.setData({ works: merged, empty: merged.length === 0 });
-          wx.setStorageSync('myWorks', merged);
-          this.resolveCloudURLs(merged);
-        }
-      } catch (err) {
-        console.log('云端作品同步失败:', err.message);
-      }
+      // Merge, de-dupe by cloudId/fileID/url
+      const merged = [...local];
+      cloudWorks.forEach(c => {
+        const key = c.cloudId || c.fileID || c.url;
+        const idx = merged.findIndex(m => (m.cloudId || m.fileID || m.url) === key);
+        if (idx === -1) merged.push(c);
+        else merged[idx] = { ...merged[idx], ...c, cloudId: c.cloudId || merged[idx].cloudId };
+      });
+      merged.sort((a, b) => (b.id || 0) - (a.id || 0));
+      this._apply(merged);
+      wx.setStorageSync('myWorks', merged);
+      this._resolveCloudURLs(merged);
+    } catch (err) {
+      console.log('[history] cloud sync failed:', err && err.message);
+    } finally {
+      this.setData({ loading: false, refreshing: false });
     }
   },
 
-  // 将 cloud:// fileID 转换为可展示的临时链接
-  async resolveCloudURLs(works) {
-    const needResolve = works.filter(w => w.needResolve && w.fileID);
-    if (needResolve.length === 0) return;
-
+  async _resolveCloudURLs(works) {
+    const needs = works.filter(w => w.needResolve && (w.fileID || (w.url && w.url.startsWith('cloud://'))));
+    if (!needs.length) return;
+    const fileIDs = [...new Set(needs.map(w => w.fileID || w.url))];
     try {
-      const fileIDs = needResolve.map(w => w.fileID);
-      const res = await wx.cloud.getTempFileURL({ fileList: fileIDs });
-      if (res.fileList) {
-        const updated = this.data.works.map(w => {
-          const match = res.fileList.find(f => f.fileID === w.fileID);
-          if (match && match.tempFileURL) {
-            return { ...w, url: match.tempFileURL, needResolve: false };
-          }
-          return w;
-        });
-        this.setData({ works: updated });
-        wx.setStorageSync('myWorks', updated);
-      }
+      const res = await wx.cloud.getTempFileURL({ fileList: fileIDs, timeout: 6000 });
+      const urlMap = {};
+      (res.fileList || []).forEach(f => {
+        if (f.tempFileURL) urlMap[f.fileID] = f.tempFileURL;
+      });
+      const updated = this.data.works.map(w => {
+        const key = w.fileID || w.url;
+        if (key && urlMap[key]) return { ...w, url: urlMap[key], needResolve: false };
+        return w;
+      });
+      this._apply(updated);
+      wx.setStorageSync('myWorks', updated);
     } catch (err) {
-      console.log('云存储链接转换失败:', err.message);
+      console.log('[history] getTempFileURL failed:', err && err.message);
     }
+  },
+
+  _apply(works) {
+    // Filter out anything that still has an invalid URL AND no fileID — they'll never render
+    const safe = works
+      .filter(w => isRenderable(w.url) || (w.fileID && typeof w.fileID === 'string') || w.id)
+      .map((w, i) => ({
+        ...w,
+        _index: i,
+        seq: String(i + 1).padStart(2, '0'),
+      }));
+    this.setData({
+      works: safe,
+      empty: safe.length === 0,
+    });
   },
 
   goBack() {
-    wx.navigateBack();
+    if (getCurrentPages().length > 1) wx.navigateBack();
+    else wx.switchTab({ url: '/pages/my/my' });
   },
 
   goCreate() {
@@ -129,19 +148,27 @@ Page({
   onPreview(e) {
     const index = e.currentTarget.dataset.index;
     const item = this.data.works[index];
-    if (!item?.url) {
-      wx.showToast({ title: '图片加载中', icon: 'none' });
-      return;
-    }
-    wx.previewImage({
-      current: item.url,
-      urls: this.data.works.filter(w => w.url).map(w => w.url),
+    if (!item || !isRenderable(item.url)) return;
+    const title = item.title || item.style || '作品';
+    wx.navigateTo({
+      url: `/subpackages/preview/pages/preview/preview?url=${encodeURIComponent(item.url)}&title=${encodeURIComponent(title)}`,
     });
+  },
+
+  onMakeSame(e) {
+    const item = e.currentTarget.dataset.item;
+    if (!item) return;
+    wx.setStorageSync('makeSameParams', {
+      cover: item.url,
+      title: item.title || '作品',
+      style: item.style || '',
+    });
+    wx.switchTab({ url: '/pages/create/create' });
   },
 
   async onSave(e) {
     const item = e.currentTarget.dataset.item;
-    if (!item?.url) {
+    if (!item || !isRenderable(item.url)) {
       wx.showToast({ title: '图片不可用', icon: 'none' });
       return;
     }
@@ -154,37 +181,31 @@ Page({
       title: '确认删除',
       content: '删除后无法恢复，确定要删除吗？',
       success: (res) => {
-        if (res.confirm) {
-          const works = this.data.works.filter(w => w.id !== item.id);
-          this.setData({ works, empty: works.length === 0 });
-          wx.setStorageSync('myWorks', works);
-          if (checkLogin() && item.cloudId) {
-            callFunction('tools', { action: 'deleteWork', workId: item.cloudId }, { silent: true }).catch(err => {
-              console.log('云端删除作品失败:', err.message);
-            });
-          }
-          wx.showToast({ title: '已删除', icon: 'success' });
+        if (!res.confirm) return;
+        const works = this.data.works.filter(w => w.id !== item.id);
+        this._apply(works);
+        wx.setStorageSync('myWorks', works);
+        if (checkLogin() && item.cloudId) {
+          callFunction('tools', { action: 'deleteWork', workId: item.cloudId }, { silent: true }).catch(() => {});
         }
-      }
+        wx.showToast({ title: '已删除', icon: 'success' });
+      },
     });
   },
 
-  onShare() {
-    wx.showShareMenu({ withShareTicket: true, menus: ['shareAppMessage', 'shareTimeline'] });
+  onImgError(e) {
+    const id = e.currentTarget.dataset.id;
+    console.log('[history] image load failed for id=', id);
+    // 温和处理：仅标记加载失败，不自动删除，避免网络波动导致作品丢失
+    const works = this.data.works.map(w => w.id === id ? { ...w, _imgError: true } : w);
+    this._apply(works);
+    wx.setStorageSync('myWorks', works);
   },
 
   onShareAppMessage() {
     const works = this.data.works;
-    if (works.length > 0) {
-      return {
-        title: '照片工坊 - 我的AI作品',
-        path: '/subpackages/history/pages/history/history',
-        imageUrl: works[0].url,
-      };
-    }
-    return {
-      title: '照片工坊 - 我的AI作品',
-      path: '/subpackages/history/pages/history/history',
-    };
+    const share = { title: '照片工坊 - 我的AI作品', path: '/subpackages/history/pages/history/history' };
+    if (works.length > 0 && isRenderable(works[0].url)) share.imageUrl = works[0].url;
+    return share;
   },
 });

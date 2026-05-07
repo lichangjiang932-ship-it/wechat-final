@@ -1,0 +1,59 @@
+<!-- Likes · Liked works dark -->
+<view class="page {{themeClass}}">
+
+  <!-- Nav bar -->
+  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner" style="min-height: 44px;">
+      <view class="nav-back tap" bindtap="goBack">
+        <view class="ic ic-arrow-left nav-back-icon"/>
+      </view>
+      <text class="label-mono nav-title">LIKED · 喜欢</text>
+      <view class="nav-placeholder"/>
+    </view>
+  </view>
+
+  <!-- Content -->
+  <scroll-view scroll-y class="scroll" style="padding-top: calc({{navBarHeight}}px + {{statusBarHeight}}px);" bindscrolltolower="loadMore"
+    refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh">
+
+    <!-- Editorial header — gives breathing room below the nav -->
+    <view class="head" wx:if="{{!empty && !loading}}">
+      <text class="display d-big">你</text>
+      <text class="display display-italic d-big">喜欢的</text>
+    </view>
+
+    <!-- Loading -->
+    <view class="loading-state" wx:if="{{loading && !refreshing}}">
+      <view class="spinner"/>
+    </view>
+
+    <!-- Empty state -->
+    <view class="empty-state" wx:if="{{empty && !loading}}">
+      <view class="ic ic-heart empty-icon" style="background-color: var(--cream-4); width:64rpx; height:64rpx;"/>
+      <text class="display empty-title">还没有喜欢的作品</text>
+      <text class="label empty-desc">在发现页浏览作品时点击爱心即可添加</text>
+      <view class="btn-ember empty-btn tap" bindtap="goDiscover">
+        <text>去发现</text>
+      </view>
+    </view>
+
+    <!-- Bento gallery (同首页「光的切片」) -->
+    <view class="bento-grid" wx:if="{{!empty && !loading}}">
+      <view class="bento-cell tap" wx:for="{{likes}}" wx:key="id"
+            style="grid-area: {{item.area}};"
+            bindtap="onPreview" data-index="{{item._index}}" data-item="{{item}}">
+        <image class="bento-img" src="{{item.url}}" mode="aspectFill" lazy-load="{{true}}"/>
+        <view class="bento-shade"/>
+        <view class="bento-tag">♡ {{item.likes || 0}}</view>
+        <view class="bento-fav tap" catchtap="onRemove" data-id="{{item.id}}">
+          <view class="ic ic-heart active" style="background-color: var(--ember); width:24rpx; height:24rpx;"/>
+        </view>
+        <view class="bento-body">
+          <text class="display bento-name">{{item.title || 'AI作品'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="safe-bottom"/>
+  </scroll-view>
+</view>

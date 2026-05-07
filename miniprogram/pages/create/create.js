@@ -4,10 +4,14 @@ const { computeNavBar, formatTime } = require('../../utils/common');
 const { STYLES, RATIOS, QUICK_PROMPTS, VIP_PRICES, CATEGORY_MAP } = require('../../config/data');
 const { showError, withRetry, checkNetwork } = require('../../utils/errorHandler');
 const { generateSharePoster, savePosterToAlbum } = require('../../utils/sharePoster');
+const { addAIWatermark } = require('../../utils/watermark');
+const i18n = require('../../utils/i18n');
+const themeMod = require('../../utils/theme');
 
+// 注：wxml 通过 i18n key 渲染 mode 文案，icon 字段保留为 SVG class 名（如未来 wxml 引用 {{mode.icon}} 可直接挂 ic-* class）
 const MODES = [
-  { id: 'text2img', name: 'AI绘画', icon: '🎨', desc: '文字生成图片' },
-  { id: 'img2img', name: '图生图', icon: '🖼️', desc: '照片变风格' },
+  { id: 'text2img', name: 'AI绘画', icon: 'ic-spark',  desc: '文字生成图片' },
+  { id: 'img2img',  name: '图生图', icon: 'ic-camera', desc: '照片变风格'   },
 ];
 
 Page({
@@ -23,6 +27,9 @@ Page({
     prompt: '',
     sourceImage: null,
     sourceFileID: null,
+    // 做同款参考（不占用上传槽，仅作为风格上下文显示）
+    templateRef: '',
+    templateRefTitle: '',
     phase: 'idle',
     progress: 0,
     progressText: '',
@@ -44,37 +51,119 @@ Page({
     enhancedPrompt: '',
     skillName: '',
     showEnhancedPrompt: false,
+    // 参考图来源标签（来自「我的上传」时显示）
+    refSource: '',
+    refMeta: null,
+    // i18n / theme
+    lang: 'zh',
+    theme: 'dark',
+    themeClass: 'theme-dark',
+    i18n: {},
   },
 
   onLoad(options) {
     const navBar = computeNavBar();
-    this.setData({ navBarHeight: navBar.navBarHeight, statusBarHeight: navBar.statusBarHeight });
+    const lang = i18n.getLang();
+    const theme = themeMod.getTheme();
+    this.setData({
+      navBarHeight: navBar.navBarHeight,
+      statusBarHeight: navBar.statusBarHeight,
+      lang, theme, themeClass: themeMod.themeClass(theme), i18n: i18n.pack(lang),
+    });
     
     if (options.templateName) this.setData({ templateName: decodeURIComponent(options.templateName) });
     if (options.category && CATEGORY_MAP[options.category]) {
       this.setData({ selectedStyleId: CATEGORY_MAP[options.category] });
     }
-    if (options.cover) this.setData({ sourceImage: decodeURIComponent(options.cover), activeMode: 'img2img' });
+    // 做同款：封面作为风格参考，保持上传槽空着让用户上传自己的照片
+    if (options.cover) {
+      this.setData({
+        templateRef: decodeURIComponent(options.cover),
+        templateRefTitle: options.title ? decodeURIComponent(options.title) : (options.templateName ? decodeURIComponent(options.templateName) : ''),
+        activeMode: 'img2img',
+      });
+    }
     if (options.title) this.setData({ templateName: decodeURIComponent(options.title) });
     
+    // 读取「我的上传」传入的参考图
+    this.loadRefImage();
+
     this.checkMakeSameParams();
   },
 
   onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 2 });
+    }
+    // sync lang/theme in case user changed from my page
+    const lang = i18n.getLang();
+    const theme = themeMod.getTheme();
+    if (lang !== this.data.lang || theme !== this.data.theme) {
+      this.setData({ lang, theme, themeClass: themeMod.themeClass(theme), i18n: i18n.pack(lang) });
+    }
+    this.checkCreateParams();
     this.checkMakeSameParams();
     if (checkLogin()) this.loadUsage();
+  },
+
+  checkCreateParams() {
+    const params = wx.getStorageSync('createParams');
+    if (!params) return;
+    const updates = { resultImage: null };
+    if (params.category && CATEGORY_MAP[params.category]) {
+      updates.selectedStyleId = CATEGORY_MAP[params.category];
+    }
+    if (params.style) updates.selectedStyleId = params.style;
+    if (params.templateName) updates.templateName = decodeURIComponent(params.templateName);
+    if (params.title) updates.templateName = decodeURIComponent(params.title);
+    if (params.prompt) updates.prompt = params.prompt;
+    if (params.cover) {
+      updates.templateRef = decodeURIComponent(params.cover);
+      updates.templateRefTitle = params.title ? decodeURIComponent(params.title) : '';
+      updates.activeMode = 'img2img';
+    }
+    this.setData(updates);
+    wx.removeStorageSync('createParams');
   },
 
   checkMakeSameParams() {
     const params = wx.getStorageSync('makeSameParams');
     if (params) {
       const updates = { resultImage: null };
-      if (params.cover) { updates.sourceImage = params.cover; updates.activeMode = 'img2img'; }
+      // 做同款：把封面当作「风格参考」而不是用户上传，避免占用上传槽
+      if (params.cover) {
+        updates.templateRef = params.cover;
+        updates.templateRefTitle = params.title || '';
+        updates.activeMode = 'img2img';
+      }
       if (params.style) updates.selectedStyleId = params.style;
       if (params.title) updates.templateName = params.title;
+      if (params.prompt) updates.prompt = params.prompt;
       this.setData(updates);
       wx.removeStorageSync('makeSameParams');
+      wx.showToast({
+        title: this.data.lang === 'en' ? 'Upload your photo to apply this style' : '上传你的照片以套用此风格',
+        icon: 'none',
+        duration: 2000,
+      });
     }
+  },
+
+  // 清除做同款的参考图
+  clearTemplateRef() {
+    this.setData({ templateRef: '', templateRefTitle: '' });
+  },
+
+  // 直接把做同款封面作为输入图（用户主动选择）
+  useTemplateAsSource() {
+    if (!this.data.templateRef) return;
+    this.setData({
+      sourceImage: this.data.templateRef,
+      templateRef: '',
+      templateRefTitle: '',
+      activeMode: 'img2img',
+      resultImage: null,
+    });
   },
 
   async loadUsage() {
@@ -84,6 +173,34 @@ Page({
     } catch (e) {}
   },
 
+  // 读取「我的上传」传入的参考图
+  loadRefImage() {
+    try {
+      const ref = wx.getStorageSync('refImage');
+      if (!ref || !ref.url) return;
+
+      // 自动切换图生图模式
+      this.setData({
+        sourceImage: ref.url,
+        sourceFileID: ref.fileID || '',
+        activeMode: 'img2img',
+        resultImage: null,
+        // 来源标签
+        refSource: ref.name || '我的上传',
+        refMeta: ref.meta || null,
+      });
+
+      // 读取后清除（防止刷新页面重复带入）
+      wx.removeStorageSync('refImage');
+
+      wx.showToast({ title: '参考图已加载', icon: 'none', duration: 1500 });
+    } catch (_) {}
+  },
+
+  goBack() {
+    if (getCurrentPages().length > 1) wx.navigateBack();
+    else wx.switchTab({ url: '/pages/index/index' });
+  },
   switchMode(e) { this.setData({ activeMode: e.currentTarget.dataset.mode, resultImage: null }); },
   selectStyle(e) {
     wx.vibrateShort({ type: 'light' });
@@ -107,9 +224,39 @@ Page({
     });
   },
 
-  clearReference() { this.setData({ sourceImage: null, sourceFileID: null }); },
+  clearReference() { this.setData({ sourceImage: null, sourceFileID: null, refSource: '', refMeta: null }); },
 
   // ========== 核心生成流程（带错误处理） ==========
+  async ensureLocalSourceImage() {
+    const src = this.data.sourceImage;
+    if (!src || /^wxfile:|^file:|^\//.test(src)) return src;
+
+    try {
+      let remote = src;
+      if (remote.startsWith('cloud://')) {
+        const temp = await wx.cloud.getTempFileURL({ fileList: [remote] });
+        remote = temp.fileList?.[0]?.tempFileURL || '';
+      }
+      if (!/^https?:\/\//.test(remote)) return src;
+
+      const dl = await new Promise((resolve, reject) => {
+        wx.downloadFile({
+          url: remote,
+          success: resolve,
+          fail: reject,
+        });
+      });
+      if (dl.statusCode >= 200 && dl.statusCode < 300 && dl.tempFilePath) {
+        this.setData({ sourceImage: dl.tempFilePath });
+        return dl.tempFilePath;
+      }
+      throw new Error('下载参考图失败');
+    } catch (e) {
+      console.warn('[create] 参考图本地化失败:', e.message);
+      throw new Error('参考图不可用，请重新上传');
+    }
+  },
+
   async generate() {
     // 检查网络
     const hasNetwork = await checkNetwork();
@@ -117,8 +264,16 @@ Page({
 
     if (!checkLogin()) return wx.showModal({ title: '提示', content: '请先登录', showCancel: false });
     if (this.data.phase !== 'idle') return;
+    // 做同款时若用户没写描述，自动用模板标题作为上下文
+    if (!this.data.prompt.trim() && this.data.templateRefTitle) {
+      this.setData({ prompt: this.data.templateRefTitle });
+    }
     if (!this.data.prompt.trim()) return wx.showToast({ title: '请输入描述', icon: 'none' });
     if (this.data.activeMode === 'img2img' && !this.data.sourceImage) {
+      // 若仅有做同款的参考图但用户没上传照片，提示用户上传
+      if (this.data.templateRef) {
+        return wx.showToast({ title: '请上传你的照片套用此风格', icon: 'none' });
+      }
       return wx.showToast({ title: '请上传参考图', icon: 'none' });
     }
 
@@ -141,7 +296,8 @@ Page({
     try {
       if (this.data.activeMode === 'img2img') {
         this.setData({ phase: 'uploading', progress: 10, progressText: '上传图片中...' });
-        const fileID = await withRetry(() => uploadFile(this.data.sourceImage));
+        const localSource = await this.ensureLocalSourceImage();
+        const fileID = await withRetry(() => uploadFile(localSource));
         this.setData({ sourceFileID: fileID });
       }
 
@@ -176,12 +332,42 @@ Page({
       }
     } catch (e) {
       console.error(e);
+      const msg = (e && e.message) || '';
+      // 并发限制错误：自动延迟重试（避免用户手动点）
+      if (/繁忙|30 秒|并发|rate limit|50430|请稍后重试/i.test(msg)) {
+        this.autoRetryWithCountdown(30);
+        return;
+      }
       this.setData({ phase: 'idle' });
       showError(e, {
         showRetry: true,
         onRetry: () => this.generate(),
       });
     }
+  },
+
+  // 并发限制自动倒计时重试
+  autoRetryWithCountdown(seconds) {
+    this.setData({
+      phase: 'idle',
+      progress: 0,
+      progressText: `排队中，${seconds}秒后自动重试...`,
+      lastError: { type: 'LIMIT', message: '当前生成人数较多' },
+      canRetry: true,
+    });
+    let remain = seconds;
+    if (this._retryTimer) clearInterval(this._retryTimer);
+    this._retryTimer = setInterval(() => {
+      remain--;
+      if (remain <= 0) {
+        clearInterval(this._retryTimer);
+        this._retryTimer = null;
+        this.setData({ progressText: '', lastError: null });
+        this.generate();
+        return;
+      }
+      this.setData({ progressText: `排队中，${remain}秒后自动重试...` });
+    }, 1000);
   },
 
   // 切换显示增强后的提示词
@@ -208,18 +394,72 @@ Page({
     }, 2000);
   },
 
-  saveImage() {
-    if (!this.data.resultImage) return;
-    wx.saveImageToPhotosAlbum({
-      filePath: this.data.resultImage,
-      success: () => wx.showToast({ title: '已保存', icon: 'success' }),
-      fail: (e) => {
-        if (e.errMsg.includes('auth deny')) {
-          wx.showModal({ title: '需要相册权限', content: '请在设置中开启', confirmText: '去设置',
-            success: (r) => { if (r.confirm) wx.openSetting(); } });
-        }
-      },
+  // 保存到相册：远程URL/cloud://都先下载为本地临时文件，再保存；保存成功后重置到 idle，方便继续生图
+  resetToIdle() {
+    this.setData({
+      phase: 'idle',
+      progress: 0,
+      progressText: '',
+      resultImage: null,
+      resultFileID: null,
+      enhancedPrompt: '',
+      skillName: '',
+      showEnhancedPrompt: false,
     });
+  },
+
+  async saveImage() {
+    if (!this.data.resultImage) return;
+    wx.showLoading({ title: '保存中...', mask: true });
+
+    try {
+      let filePath = this.data.resultImage;
+
+      // 1. 远程链接 → 本地临时文件
+      if (/^cloud:\/\//.test(filePath)) {
+        const t = await wx.cloud.getTempFileURL({ fileList: [filePath] });
+        filePath = t.fileList?.[0]?.tempFileURL || filePath;
+      }
+      if (/^https?:\/\//.test(filePath)) {
+        const dl = await new Promise((resolve, reject) => {
+          wx.downloadFile({ url: filePath, success: resolve, fail: reject });
+        });
+        if (dl.statusCode < 200 || dl.statusCode >= 300 || !dl.tempFilePath) {
+          throw new Error('下载失败');
+        }
+        filePath = dl.tempFilePath;
+      }
+
+      // 2. 合成「AI生成」水印（合成失败则降级使用原图，不阻塞保存）
+      try {
+        const watermarked = await addAIWatermark(filePath, 'watermarkCanvas', this);
+        if (watermarked) filePath = watermarked;
+      } catch (we) {
+        console.warn('[create] 水印合成失败，使用原图保存:', we && we.message);
+      }
+
+      // 3. 保存到相册
+      await new Promise((resolve, reject) => {
+        wx.saveImageToPhotosAlbum({ filePath, success: resolve, fail: reject });
+      });
+
+      wx.hideLoading();
+      wx.showToast({ title: '已保存', icon: 'success' });
+      this.resetToIdle();
+    } catch (e) {
+      wx.hideLoading();
+      const msg = (e && e.errMsg) || (e && e.message) || '';
+      if (msg.includes('auth deny') || msg.includes('authorize')) {
+        wx.showModal({
+          title: '需要相册权限', content: '请在设置中开启', confirmText: '去设置',
+          success: (r) => { if (r.confirm) wx.openSetting(); },
+        });
+      } else if (msg.includes('cancel')) {
+        // 用户取消，不打扰
+      } else {
+        wx.showToast({ title: '保存失败，请重试', icon: 'none' });
+      }
+    }
   },
 
   async saveToMyWorks(fileID, displayUrl, remoteResult = null) {
@@ -250,6 +490,10 @@ Page({
         }
       } catch (e) { console.log('作品云端同步失败:', e.message); }
     }
+  },
+
+  onImageError() {
+    wx.showToast({ title: '图片加载失败，请重试', icon: 'none' });
   },
 
   previewResult() {
@@ -302,6 +546,52 @@ Page({
   openPayPopup() { this.setData({ showPayPopup: true, selectedVipPlan: 'month' }); },
   closePayPopup() { this.setData({ showPayPopup: false }); },
   selectVipPlan(e) { wx.vibrateShort({ type: 'light' }); this.setData({ selectedVipPlan: e.currentTarget.dataset.plan }); },
+
+  async subscribe() {
+    const { selectedVipPlan } = this.data;
+    if (!checkLogin()) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+    wx.showLoading({ title: '创建订单…', mask: true });
+    try {
+      const res = await callFunction('ai', { action: 'createOrder', plan: selectedVipPlan });
+      wx.hideLoading();
+      const userInfo = wx.getStorageSync('userInfo') || {};
+      const activate = () => {
+        const expireTime = selectedVipPlan === 'month'
+          ? Date.now() + 30 * 24 * 60 * 60 * 1000
+          : Date.now() + 365 * 24 * 60 * 60 * 1000;
+        const newUserInfo = { ...userInfo, vipLevel: selectedVipPlan, vipExpireTime: expireTime };
+        wx.setStorageSync('userInfo', newUserInfo);
+        this.setData({ showPayPopup: false });
+        this.loadUsage();
+      };
+      if (res && res.paySign) {
+        wx.requestPayment({
+          timeStamp: res.timeStamp,
+          nonceStr: res.nonceStr,
+          package: res.package,
+          signType: res.signType,
+          paySign: res.paySign,
+          success: () => {
+            wx.showToast({ title: '支付成功', icon: 'success' });
+            activate();
+          },
+          fail: (err) => {
+            const cancelled = err && err.errMsg === 'requestPayment:fail cancel';
+            wx.showToast({ title: cancelled ? '支付取消' : '支付失败', icon: 'none' });
+          },
+        });
+      } else {
+        wx.showToast({ title: '支付配置异常，请联系客服', icon: 'none' });
+      }
+    } catch (e) {
+      wx.hideLoading();
+      wx.showToast({ title: '支付暂不可用', icon: 'none' });
+    }
+  },
+
   retryGenerate() { this.setData({ phase: 'idle', resultImage: null, resultFileID: null }); },
 
   onHide() {
@@ -309,12 +599,20 @@ Page({
       clearInterval(this._timer);
       this._timer = null;
     }
+    if (this._retryTimer) {
+      clearInterval(this._retryTimer);
+      this._retryTimer = null;
+    }
   },
 
   onUnload() {
     if (this._timer) {
       clearInterval(this._timer);
       this._timer = null;
+    }
+    if (this._retryTimer) {
+      clearInterval(this._retryTimer);
+      this._retryTimer = null;
     }
   },
 

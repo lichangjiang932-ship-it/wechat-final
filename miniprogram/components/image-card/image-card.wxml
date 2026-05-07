@@ -16,7 +16,7 @@
   
   <!-- 错误占位 -->
   <view class="card-error" wx:if="{{error}}">
-    <text class="error-icon">🖼️</text>
+    <view class="ic ic-image-broken error-icon"/>
     <text class="error-text">加载失败</text>
   </view>
   

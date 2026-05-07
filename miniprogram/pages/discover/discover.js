@@ -1,7 +1,8 @@
-// pages/discover/discover.js - 发现页
+// pages/discover/discover.js - 发现页（接入真实云数据库）
 const { computeNavBar } = require('../../utils/common');
-const { STYLES } = require('../../config/data');
+const { callFunction, checkLogin } = require('../../utils/cloud');
 const { preloadImages, throttle } = require('../../utils/imageLoader');
+const themeMod = require('../../utils/theme');
 
 function debounce(fn, delay) {
   let timer = null;
@@ -12,24 +13,15 @@ function debounce(fn, delay) {
 }
 
 const TABS = ['推荐', '写真', '证件照', '艺术', '动漫'];
-
-const MOCK_WORKS = [
-  { id: 1, title: '最美证件照', cover: '/images/covers/cover-portrait.jpg', likes: 1280, h: 320, category: '证件照' },
-  { id: 2, title: '日系写真', cover: '/images/covers/cover-art.jpg', likes: 960, h: 400, category: '写真' },
-  { id: 3, title: '水彩插画', cover: '/images/covers/cover-watercolor.jpg', likes: 856, h: 280, category: '艺术' },
-  { id: 4, title: '国风古韵', cover: '/images/covers/cover-chinese.jpg', likes: 742, h: 380, category: '艺术' },
-  { id: 5, title: '赛博朋克', cover: '/images/covers/cover-cyberpunk.jpg', likes: 621, h: 300, category: '艺术' },
-  { id: 6, title: '油画质感', cover: '/images/covers/inspire-warm.jpg', likes: 580, h: 360, category: '艺术' },
-  { id: 7, title: '二次元', cover: '/images/covers/cover-anime.jpg', likes: 432, h: 340, category: '动漫' },
-  { id: 8, title: '粘土风', cover: '/images/covers/cover-clay.jpg', likes: 389, h: 260, category: '动漫' },
-];
+const PAGE_SIZE = 20;
 
 Page({
   data: {
     tabs: TABS,
     activeTab: '推荐',
-    leftCol: [],
-    rightCol: [],
+    displayWorks: [],
+    leftWorks: [],
+    rightWorks: [],
     hasMore: false,
     page: 1,
     navBarHeight: 44,
@@ -40,59 +32,171 @@ Page({
     searchFocus: false,
     refreshing: false,
     loading: true,
+    empty: false,
+    theme: 'dark',
+    themeClass: 'theme-dark',
   },
 
   onLoad() {
     const navBar = computeNavBar();
-    this.setData({ navBarHeight: navBar.navBarHeight, statusBarHeight: navBar.statusBarHeight });
+    const theme = themeMod.getTheme();
+    this.setData({
+      navBarHeight: navBar.navBarHeight,
+      statusBarHeight: navBar.statusBarHeight,
+      theme, themeClass: themeMod.themeClass(theme),
+    });
     this.loadWorks();
   },
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 2 });
+      this.getTabBar().setData({ selected: 1 });
+    }
+    const theme = themeMod.getTheme();
+    if (theme !== this.data.theme) {
+      this.setData({ theme, themeClass: themeMod.themeClass(theme) });
     }
   },
 
-  // ========== 数据加载 ==========
-  loadWorks() {
-    this.setData({ loading: true });
+  // ========== 从云数据库加载作品 ==========
+  async loadWorks() {
+    const { activeTab, page, searchKeyword } = this.data;
+    this.setData({ loading: true, empty: false });
 
-    setTimeout(() => {
-      let works = [...MOCK_WORKS];
+    try {
+      const params = {
+        action: 'getGalleryWorks',
+        page: page,
+        pageSize: PAGE_SIZE,
+      };
 
-      if (this.data.activeTab !== '推荐') {
-        works = works.filter(w => w.category === this.data.activeTab);
+      if (activeTab !== '推荐') {
+        params.category = activeTab;
       }
 
-      if (this.data.searchKeyword) {
-        const keyword = this.data.searchKeyword.toLowerCase();
-        works = works.filter(w => w.title.toLowerCase().includes(keyword));
+      if (searchKeyword && searchKeyword.trim()) {
+        params.keyword = searchKeyword.trim();
       }
 
-      const favorites = wx.getStorageSync('myFavorites') || [];
-      const favoriteIds = favorites.map(f => f.id);
-      works.forEach(w => { w.isFavorited = favoriteIds.includes(w.id); });
+      const res = await callFunction('tools', params, { silent: page > 1 });
 
-      const left = works.filter((_, i) => i % 2 === 0);
-      const right = works.filter((_, i) => i % 2 !== 0);
+      if (res && Array.isArray(res.works)) {
+        let works = res.works || [];
 
-      this.setData({
-        leftCol: left,
-        rightCol: right,
-        hasMore: false,
-        loading: false,
-        refreshing: false,
+        // 将 cloud:// fileID 转换为临时链接
+        works = await this.resolveCloudURLs(works);
+
+        // 检查收藏状态
+        const favorites = wx.getStorageSync('myFavorites') || [];
+        const favoriteIds = favorites.map(f => f.id);
+        works.forEach(w => { w.isFavorited = favoriteIds.includes(w.id); });
+
+        const mergedWorks = page === 1
+          ? works
+          : [...this.data.displayWorks, ...works];
+        const displayWorks = this.decorateWorks(mergedWorks);
+        const { leftWorks, rightWorks } = this.splitWaterfallColumns(displayWorks);
+        this.setData({
+          displayWorks,
+          leftWorks,
+          rightWorks,
+          hasMore: !!res.hasMore,
+          loading: false,
+          refreshing: false,
+          empty: page === 1 && works.length === 0,
+        });
+
+        // 预加载图片
+        if (works.length > 0) {
+          this.preloadWorkImages(works);
+        }
+      } else {
+        this.setData({ loading: false, refreshing: false, empty: page === 1 });
+      }
+    } catch (e) {
+      console.error('[discover] 加载作品失败:', e.message);
+      this.setData({ loading: false, refreshing: false, empty: page === 1 && this.data.displayWorks.length === 0 });
+      if (page === 1) {
+        wx.showToast({ title: '加载失败，请下拉刷新', icon: 'none' });
+      }
+    }
+  },
+
+  // 将 cloud:// fileID 转换为可展示的临时链接
+  async resolveCloudURLs(works) {
+    const needResolve = works.filter(w => w.cover && w.cover.startsWith('cloud://'));
+    if (needResolve.length === 0) return works;
+
+    try {
+      const fileIDs = [...new Set(needResolve.map(w => w.cover))];
+      const res = await wx.cloud.getTempFileURL({ fileList: fileIDs });
+      const urlMap = {};
+      (res.fileList || []).forEach(item => {
+        if (item.tempFileURL) urlMap[item.fileID] = item.tempFileURL;
       });
 
-      // 预加载图片
-      this.preloadWorkImages(works);
-    }, 300);
+      return works.map(w => {
+        if (w.cover && w.cover.startsWith('cloud://')) {
+          return { ...w, cover: urlMap[w.cover] || '' };
+        }
+        return w;
+      });
+    } catch (e) {
+      console.warn('[discover] 云链接转换失败:', e.message);
+      return works.map(w => {
+        if (w.cover && w.cover.startsWith('cloud://')) {
+          return { ...w, cover: '' };
+        }
+        return w;
+      });
+    }
+  },
+
+  decorateWorks(works = []) {
+    return works.map((item, index) => ({
+      ...item,
+      _index: index,
+      seq: String(index + 1).padStart(2, '0'),
+      by: this.formatAuthor(item),
+      ratioClass: this.pickRatioClass(item, index),
+    }));
+  },
+
+  pickRatioClass(item = {}, index = 0) {
+    if (item.h >= 360) return 'tall';
+    if (item.h && item.h <= 300) return 'wide';
+    return index % 4 === 0 ? 'tall' : (index % 3 === 0 ? 'wide' : 'mid');
+  },
+
+  splitWaterfallColumns(works = []) {
+    const leftWorks = [];
+    const rightWorks = [];
+    let leftHeight = 0;
+    let rightHeight = 0;
+    const estHeightMap = { tall: 360, mid: 320, wide: 280 };
+
+    works.forEach((item) => {
+      const estHeight = estHeightMap[item.ratioClass] || 320;
+      if (leftHeight <= rightHeight) {
+        leftWorks.push(item);
+        leftHeight += estHeight;
+      } else {
+        rightWorks.push(item);
+        rightHeight += estHeight;
+      }
+    });
+
+    return { leftWorks, rightWorks };
+  },
+
+  formatAuthor(item = {}) {
+    const raw = item.author || item.nickname || '社区创作者';
+    return raw.startsWith('@') ? raw : `@${raw}`;
   },
 
   // 预加载图片
   preloadWorkImages(works) {
-    const urls = works.map(w => w.cover).filter(url => url && !url.startsWith('/images'));
+    const urls = works.map(w => w.cover).filter(url => url && !url.startsWith('/images') && !url.startsWith('cloud://'));
     if (urls.length > 0) {
       preloadImages(urls, 3);
     }
@@ -105,14 +209,16 @@ Page({
   },
 
   // ========== 滚动节流加载 ==========
-  onScroll: throttle(function(e) {
-    // 可以在这里处理滚动时的懒加载逻辑
+  onScroll: throttle(function (e) {
+    // 滚动时的懒加载逻辑
   }, 200),
 
   // ========== 搜索功能 ==========
   toggleSearch() {
-    this.setData({ showSearch: !this.data.showSearch, searchFocus: !this.data.showSearch });
-    if (!this.data.showSearch) {
+    const nextShow = !this.data.showSearch;
+    this.setData({ showSearch: nextShow, searchFocus: nextShow });
+    // 关闭搜索时清空关键词并恢复默认列表
+    if (!nextShow) {
       this.clearSearch();
     }
   },
@@ -120,14 +226,14 @@ Page({
   onSearchInput: debounce(function (e) {
     this.setData({ searchKeyword: e.detail.value });
     if (e.detail.value) {
-      this.loadWorks();
+      this.setData({ page: 1 }, () => this.loadWorks());
     } else {
       this.clearSearch();
     }
   }, 350),
 
   clearSearch() {
-    this.setData({ searchKeyword: '', searchResults: [] });
+    this.setData({ searchKeyword: '', searchResults: [], page: 1 });
     this.loadWorks();
   },
 
@@ -142,27 +248,45 @@ Page({
       wx.showToast({ title: '已取消收藏', icon: 'none' });
     } else {
       favorites.unshift({ id: item.id, url: item.cover, title: item.title, likes: item.likes });
+      wx.vibrateShort({ type: 'light' });
       wx.showToast({ title: '已收藏', icon: 'success' });
     }
     wx.setStorageSync('myFavorites', favorites);
-    this.loadWorks();
+    // 更新收藏状态（避免直接修改 this.data）
+    const favoriteIds = favorites.map(f => f.id);
+    const displayWorks = (this.data.displayWorks || []).map(w => ({
+      ...w,
+      isFavorited: favoriteIds.includes(w.id),
+    }));
+    const { leftWorks, rightWorks } = this.splitWaterfallColumns(displayWorks);
+    this.setData({ displayWorks, leftWorks, rightWorks });
+
+    // 同步云端
+    if (checkLogin()) {
+      if (index > -1) {
+        callFunction('tools', { action: 'removeFavorite', itemId: item.id }, { silent: true }).catch(() => {});
+      } else {
+        callFunction('tools', { action: 'saveFavorite', item: { id: item.id, title: item.title, cover: item.cover, likes: item.likes } }, { silent: true }).catch(() => {});
+      }
+    }
   },
 
   switchTab(e) {
     wx.vibrateShort({ type: 'light' });
-    this.setData({ activeTab: e.currentTarget.dataset.tab, page: 1 }, () => this.loadWorks());
+    this.setData({ activeTab: e.currentTarget.dataset.tab, page: 1, displayWorks: [], leftWorks: [], rightWorks: [] }, () => this.loadWorks());
   },
 
   loadMore() {
-    if (this.data.hasMore) {
+    if (this.data.hasMore && !this.data.loading) {
       this.setData({ page: this.data.page + 1 }, () => this.loadWorks());
     }
   },
 
-  onImageTap(e) {
-    const item = e.currentTarget.dataset.item;
+  onWorkTap(e) {
+    const item = e.currentTarget.dataset.item || e.currentTarget.dataset.work;
+    if (!item) return;
     wx.navigateTo({
-      url: `/pages/preview/preview?url=${encodeURIComponent(item.cover)}&title=${encodeURIComponent(item.title)}&likes=${item.likes}`
+      url: `/subpackages/preview/pages/preview/preview?url=${encodeURIComponent(item.cover)}&title=${encodeURIComponent(item.title)}&likes=${item.likes || 0}`
     });
   },
 
@@ -180,6 +304,6 @@ Page({
   },
 
   onUnload() {
-    // 页面卸载时可以清理资源
+    // 页面卸载时清理
   },
 });

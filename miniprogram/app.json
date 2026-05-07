@@ -4,49 +4,106 @@
     "pages/create/create",
     "pages/discover/discover",
     "pages/my/my",
-    "pages/preview/preview",
-    "pages/settings/settings",
-    "pages/history/history",
     "pages/favorites/favorites",
-    "pages/member/member"
+    "pages/likes/likes",
+    "pages/upload/upload"
   ],
+  "subpackages": [
+    {
+      "root": "subpackages/preview",
+      "name": "preview",
+      "pages": [
+        "pages/preview/preview"
+      ]
+    },
+    {
+      "root": "subpackages/settings",
+      "name": "settings",
+      "pages": [
+        "pages/settings/settings"
+      ]
+    },
+    {
+      "root": "subpackages/history",
+      "name": "history",
+      "pages": [
+        "pages/history/history"
+      ]
+    },
+    {
+      "root": "subpackages/member",
+      "name": "member",
+      "pages": [
+        "pages/member/member"
+      ]
+    },
+    {
+      "root": "subpackages/poster",
+      "name": "poster",
+      "pages": [
+        "pages/poster/poster"
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/my/my": {
+      "network": "all",
+      "packages": [
+        "preview",
+        "settings",
+        "history",
+        "member",
+        "poster"
+      ]
+    },
+    "pages/discover/discover": {
+      "network": "all",
+      "packages": [
+        "preview"
+      ]
+    },
+    "pages/index/index": {
+      "network": "all",
+      "packages": [
+        "preview"
+      ]
+    }
+  },
   "window": {
-    "backgroundTextStyle": "light",
+    "backgroundTextStyle": "dark",
     "navigationStyle": "custom",
-    "backgroundColor": "#F8F6F3"
+    "backgroundColor": "#0A0806"
   },
   "tabBar": {
-    "color": "#9A9288",
-    "selectedColor": "#C9956B",
-    "backgroundColor": "#FFFFFF",
-    "borderStyle": "white",
+    "custom": true,
+    "color": "#8A8072",
+    "selectedColor": "#FDFBF5",
+    "backgroundColor": "#0E0B08",
+    "borderStyle": "black",
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "images/tab-home.png",
-        "selectedIconPath": "images/tab-home-active.png"
-      },
-      {
-        "pagePath": "pages/create/create",
-        "text": "创作",
-        "iconPath": "images/tab-create.png",
-        "selectedIconPath": "images/tab-create-active.png"
+        "text": "Home"
       },
       {
         "pagePath": "pages/discover/discover",
-        "text": "发现",
-        "iconPath": "images/tab-discover.png",
-        "selectedIconPath": "images/tab-discover-active.png"
+        "text": "Gallery"
+      },
+      {
+        "pagePath": "pages/create/create",
+        "text": "Create"
+      },
+      {
+        "pagePath": "pages/favorites/favorites",
+        "text": "Library"
       },
       {
         "pagePath": "pages/my/my",
-        "text": "我的",
-        "iconPath": "images/tab-my.png",
-        "selectedIconPath": "images/tab-my-active.png"
+        "text": "Me"
       }
     ]
   },
   "lazyCodeLoading": "requiredComponents",
-  "sitemapLocation": "sitemap.json"
+  "sitemapLocation": "sitemap.json",
+  "__usePrivacyCheck__": true
 }

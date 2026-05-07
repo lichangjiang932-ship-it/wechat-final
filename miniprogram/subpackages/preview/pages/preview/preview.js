@@ -1,33 +1,55 @@
 // subpackages/preview/pages/preview/preview.js - 图片详情页
 const { callFunction, checkLogin } = require('../../../../utils/cloud');
+const { computeNavBar } = require('../../../../utils/common');
 const { showError } = require('../../../../utils/errorHandler');
+const themeMod = require('../../../../utils/theme');
 
 Page({
   data: {
     imageUrl: '',
     title: '',
-    likes: 0,
-    imageLoaded: false,
+    prompt: '',
+    style: '',
+    ratio: '',
+    createdAt: '',
+    saves: 0,
+    shares: 0,
+    isLiked: false,
     isFavorite: false,
-    showShareMenu: false,
-    // 成功提示
-    showSuccessToast: false,
-    successTitle: '',
-    successDesc: '',
-    successIcon: 'check',
+    imageLoaded: false,
+    navBarHeight: 44,
+    statusBarHeight: 20,
+    theme: 'dark',
+    themeClass: 'theme-dark',
   },
 
   onLoad(options) {
+    const navBar = computeNavBar();
+    const theme = themeMod.getTheme();
+    this.setData({
+      navBarHeight: navBar.navBarHeight,
+      statusBarHeight: navBar.statusBarHeight,
+      theme, themeClass: themeMod.themeClass(theme),
+    });
+
     if (options.url) {
       const url = decodeURIComponent(options.url);
       this.setData({ imageUrl: url });
       this.checkFavorite(url);
+      this.checkLiked(url);
     }
-    if (options.title) {
-      this.setData({ title: decodeURIComponent(options.title) });
-    }
-    if (options.likes) {
-      this.setData({ likes: options.likes });
+    if (options.title)  this.setData({ title: decodeURIComponent(options.title) });
+    if (options.prompt) this.setData({ prompt: decodeURIComponent(options.prompt) });
+    if (options.style)  this.setData({ style: decodeURIComponent(options.style) });
+    if (options.ratio)  this.setData({ ratio: options.ratio });
+    if (options.createdAt) this.setData({ createdAt: decodeURIComponent(options.createdAt) });
+    if (options.saves)  this.setData({ saves: Number(options.saves) || 0 });
+  },
+
+  onShow() {
+    const theme = themeMod.getTheme();
+    if (theme !== this.data.theme) {
+      this.setData({ theme, themeClass: themeMod.themeClass(theme) });
     }
   },
 
@@ -37,12 +59,65 @@ Page({
     this.setData({ isFavorite: exists });
   },
 
-  goBack() {
-    wx.navigateBack();
+  checkLiked(url) {
+    const likes = wx.getStorageSync('myLikes') || [];
+    const exists = likes.some(f => f.url === url);
+    this.setData({ isLiked: exists });
   },
+
+  goBack() {
+    if (getCurrentPages().length > 1) {
+      wx.navigateBack();
+    } else {
+      wx.switchTab({ url: '/pages/index/index' });
+    }
+  },
+
+  onLike() {
+    const isLiked = !this.data.isLiked;
+    this.setData({ isLiked, saves: this.data.saves + (isLiked ? 1 : -1) });
+    wx.vibrateShort({ type: 'light' });
+
+    // 持久化存储
+    const url = this.data.imageUrl;
+    if (!url) return;
+    let likes = wx.getStorageSync('myLikes') || [];
+    if (isLiked) {
+      if (!likes.some(f => f.url === url)) {
+        likes.unshift({
+          id: this.generateItemId(url),
+          url,
+          title: this.data.title || '作品',
+          likes: this.data.saves,
+          createTime: Date.now(),
+        });
+        wx.setStorageSync('myLikes', likes);
+        wx.showToast({ title: '已喜欢', icon: 'success' });
+      }
+    } else {
+      likes = likes.filter(f => f.url !== url);
+      wx.setStorageSync('myLikes', likes);
+      wx.showToast({ title: '已取消喜欢', icon: 'none' });
+    }
+  },
+
+  onShare() { this.onShareTap && this.onShareTap(); },
+  onMore()  { wx.showShareMenu({ withShareTicket: true, menus: ['shareAppMessage', 'shareTimeline'] }); },
 
   onImageLoad() {
     this.setData({ imageLoaded: true });
+  },
+
+  onImageError() {
+    console.warn('[preview] 图片加载失败', this.data.imageUrl);
+  },
+
+  onCopyPrompt() {
+    if (!this.data.prompt) return;
+    wx.setClipboardData({
+      data: this.data.prompt,
+      success: () => wx.showToast({ title: '已复制', icon: 'success' }),
+    });
   },
 
   onImageTap() {
@@ -85,10 +160,9 @@ Page({
         createTime: Date.now(),
       };
       favorites.unshift(item);
-      wx.vibrateShort({ type: 'light' });
       wx.setStorageSync('myFavorites', favorites);
       this.setData({ isFavorite: true });
-      this.showSuccessToast({ title: '收藏成功', icon: 'heart' });
+      wx.showToast({ title: '收藏成功', icon: 'success' });
 
       if (checkLogin()) {
         try {
@@ -108,7 +182,8 @@ Page({
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash;
     }
-    return Math.abs(hash);
+    // tools.saveFavorite 要求 item.id 为 string
+    return String(Math.abs(hash));
   },
 
   onMakeSame() {
@@ -154,7 +229,7 @@ Page({
       wx.saveImageToPhotosAlbum({
         filePath: filePath,
         success: () => {
-          this.showSuccessToast({ title: '已保存到相册', icon: 'check' });
+          wx.showToast({ title: '已保存到相册', icon: 'success' });
         },
         fail: (err) => {
           if (err.errMsg.includes('auth deny')) {
@@ -174,20 +249,6 @@ Page({
       wx.hideLoading();
       showError(e);
     }
-  },
-
-  // ========== 成功提示 ==========
-  showSuccessToast({ title = '操作成功', desc = '', icon = 'check' } = {}) {
-    this.setData({
-      showSuccessToast: true,
-      successTitle: title,
-      successDesc: desc,
-      successIcon: icon,
-    });
-  },
-
-  hideSuccessToast() {
-    this.setData({ showSuccessToast: false });
   },
 
   // ========== 分享 ==========

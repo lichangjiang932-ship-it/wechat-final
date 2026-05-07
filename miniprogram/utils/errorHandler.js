@@ -158,10 +158,12 @@ async function withRetry(requestFn, options = {}) {
         throw error;
       }
       
-      // 网络错误且还有重试机会
-      if (attempt < maxRetries && (type === ErrorType.NETWORK || type === ErrorType.TIMEOUT)) {
-        logger.info(`第 ${attempt + 1} 次重试...`);
-        await new Promise(r => setTimeout(r, retryDelay * (attempt + 1)));
+      // 网络/超时/并发限制错误且还有重试机会（并发=1场景下 LIMIT 需要更长的退避）
+      if (attempt < maxRetries && (type === ErrorType.NETWORK || type === ErrorType.TIMEOUT || type === ErrorType.LIMIT)) {
+        const isLimit = type === ErrorType.LIMIT;
+        const delay = isLimit ? Math.max(retryDelay, 5000) * (attempt + 1) * 2 : retryDelay * (attempt + 1);
+        logger.info(`第 ${attempt + 1} 次重试...${isLimit ? '（并发限制，等待 ' + delay + 'ms）' : ''}`);
+        await new Promise(r => setTimeout(r, delay));
         continue;
       }
       

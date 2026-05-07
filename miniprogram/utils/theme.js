@@ -99,6 +99,31 @@ function notifyThemeChange(theme) {
       logger.error('主题回调执行失败:', e.message);
     }
   });
+  // 同步到当前所有已实例化的页面
+  try {
+    const pages = getCurrentPages() || [];
+    pages.forEach((p) => {
+      if (p && p.setData) p.setData({ theme, themeClass: themeClass(theme) });
+    });
+  } catch (e) {}
+  // 同步导航栏颜色
+  try {
+    wx.setNavigationBarColor({
+      frontColor: theme === 'light' ? '#000000' : '#ffffff',
+      backgroundColor: theme === 'light' ? '#F6F1EA' : '#0F0D0B',
+    });
+  } catch (e) {}
+}
+
+function themeClass(theme) {
+  const t = theme || currentTheme;
+  return t === 'light' ? 'theme-light' : 'theme-dark';
+}
+
+function toggleTheme() {
+  const next = currentTheme === 'dark' ? 'light' : 'dark';
+  setTheme(next);
+  return next;
 }
 
 /**
@@ -118,4 +143,6 @@ module.exports = {
   isDark,
   onThemeChange,
   offThemeChange,
+  themeClass,
+  toggleTheme,
 };

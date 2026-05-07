@@ -34,6 +34,7 @@ const JIMENG_SERVICE = 'cv';
 const JIMENG_REGION = 'cn-north-1';
 const JIMENG_ACTION_SUBMIT = 'CVSync2AsyncSubmitTask';
 const JIMENG_ACTION_QUERY = 'CVSync2AsyncGetResult';
+const JIMENG_VERSION = '2022-08-31';
 
 // 日志（不暴露密钥）
 log.info('初始化完成', 'JIMENG_AK已配置:', !!JIMENG_AK);
@@ -71,28 +72,84 @@ function getVolcengineAuth(method, path, queryStr, headers, body, ak, sk, servic
   return `HMAC-SHA256 Credential=${ak}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 }
 
+function encodeRFC3986(str) {
+  return encodeURIComponent(str).replace(/[!'()*]/g, c => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+}
+
+function buildCanonicalQuery(params) {
+  return Object.keys(params)
+    .sort()
+    .map(k => `${encodeRFC3986(k)}=${encodeRFC3986(String(params[k]))}`)
+    .join('&');
+}
+
 function getVolcengineHeaders(action, body, ak, sk, service, region) {
   const now = new Date();
-  const date = now.toISOString();
   const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
+  const queryStr = buildCanonicalQuery({ Action: action, Version: JIMENG_VERSION });
 
   const headers = {
     'Content-Type': 'application/json',
-    'X-Date': date.replace(/[:\-]|\.\d{3}/g, ''),
-    'X-Action': action,
-    'X-Version': '2022-08-31',
+    'Host': 'visual.volcengineapi.com',
+    'X-Date': now.toISOString().replace(/[:\-]|\.\d{3}/g, ''),
+    'X-Content-Sha256': sha256Hex(bodyStr),
   };
 
-  const queryStr = '';
   const auth = getVolcengineAuth('POST', '/', queryStr, headers, bodyStr, ak, sk, service, region, now);
-  headers['Authorization'] = auth;
+  headers.Authorization = auth;
 
-  return headers;
+  return { headers, queryStr };
 }
 
 // ============ 请求ID生成 ============
 function generateRequestId() {
   return `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+// ============ 集合不存在时自动建表（首次部署） ============
+async function safeAdd(collectionName, data) {
+  const db = cloud.database();
+  try {
+    return await db.collection(collectionName).add({ data });
+  } catch (e) {
+    if (e && e.errCode === -502005) {
+      try { await db.createCollection(collectionName); } catch (_) {}
+      return await db.collection(collectionName).add({ data });
+    }
+    throw e;
+  }
+}
+
+// ============ 即梦 API 提交：碰到并发限制(429/50430) 退避重试 ============
+// 火山引擎免费/低配版并发数很低(常见 1-3 并发)，多个用户同时点生成时容易触发
+async function postJimengWithBackoff(url, body, headers, requestId, label = 'submit') {
+  // 并发=1 场景：退避时间要覆盖生成时长（15~40s），默认最长退避 55s，总退避约 106s
+  const RATE_LIMIT_RETRIES = parseInt(process.env.RATE_LIMIT_RETRIES || '4', 10);
+  const BACKOFF_MS = (process.env.RATE_LIMIT_BACKOFF_MS || '6000,15000,30000,55000')
+    .split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0);
+
+  for (let attempt = 0; attempt <= RATE_LIMIT_RETRIES; attempt++) {
+    try {
+      return await axios.post(url, body, { headers, timeout: AXIOS_TIMEOUT });
+    } catch (e) {
+      const status = e?.response?.status;
+      const apiCode = e?.response?.data?.code;
+      const isRateLimit =
+        status === 429 ||
+        apiCode === 50430 ||
+        /reach.*concurrent.*limit/i.test(e?.response?.data?.message || '');
+
+      if (isRateLimit && attempt < RATE_LIMIT_RETRIES) {
+        const delay = BACKOFF_MS[attempt] || BACKOFF_MS[BACKOFF_MS.length - 1] || 60000;
+        log.warn(requestId, `[${label}] 触发并发限制(50430)，${delay}ms 后重试 ${attempt + 1}/${RATE_LIMIT_RETRIES}`);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw e;
+    }
+  }
+  // 不会到达此处（要么 return 要么 throw）
+  throw new Error('postJimengWithBackoff: unreachable');
 }
 
 // ============================================================
@@ -168,6 +225,20 @@ const CONTENT_SKILLS = {
 
 // 质量后缀（"describe the good" 原则 — 不用 negative prompts）
 const QUALITY_BOOST = ', best quality, highly detailed, masterpiece, sharp focus, professional composition';
+
+// 画幅比例 → 即梦 API 需要的宽高（即梦 v4.0 接受的范围 512~2048）
+// 客户端 ratioMap：{ '1:1': 1, '3:4': 2, '4:3': 3, '9:16': 5, '16:9': 4 }
+const RATIO_DIMENSIONS = {
+  1: { width: 1024, height: 1024 }, // 1:1
+  2: { width: 768,  height: 1024 }, // 3:4
+  3: { width: 1024, height: 768 },  // 4:3
+  4: { width: 1280, height: 720 },  // 16:9
+  5: { width: 720,  height: 1280 }, // 9:16
+};
+
+function resolveDimensions(ratioCode) {
+  return RATIO_DIMENSIONS[ratioCode] || RATIO_DIMENSIONS[1];
+}
 
 // ============ Step 1 — 路由决策（Planner Decision，轻量快速） ============
 // 让 MLLM 从内容技能清单里选一个 skill_id，或回答 NONE
@@ -293,6 +364,12 @@ const VIP_PRICES = {
 
 const IS_TEST_MODE = String(process.env.IS_TEST_MODE || 'false').toLowerCase() === 'true';
 const PAY_NOTIFY_URL = process.env.PAY_NOTIFY_URL || '';
+const WECHAT_APPID = process.env.WECHAT_APPID || '';
+const WECHAT_MCH_ID = process.env.WECHAT_MCH_ID || '';
+const WECHAT_PAY_KEY = process.env.WECHAT_PAY_KEY || '';
+const WECHAT_UNIFIED_ORDER_URL = process.env.WECHAT_UNIFIED_ORDER_URL || 'https://api.mch.weixin.qq.com/pay/unifiedorder';
+// 测试模式白名单：逗号分隔的 openid 列表，为空则拒绝所有测试请求
+const TEST_MODE_OPENIDS = (process.env.TEST_MODE_OPENIDS || '').split(',').map(s => s.trim()).filter(Boolean);
 
 function validatePlan(plan) {
   if (!VIP_PRICES[plan]) return { valid: false, msg: '不支持的会员套餐' };
@@ -339,7 +416,7 @@ exports.main = async (event, context) => {
       case 'createOrder':
         const planInfo = validatePlan(event.plan);
         if (!planInfo.valid) return { code: -1, msg: planInfo.msg };
-        return await createOrder(openid, event.plan, requestId);
+        return await createOrder(openid, event.plan, requestId, event);
 
       default:
         log.warn(requestId, '未知操作', { action });
@@ -381,41 +458,92 @@ async function _generateImage(openid, prompt, styleId, imageRatio, requestId, im
     const { finalPrompt, contentSkillName } = await buildFinalPrompt(prompt, styleId, mode, requestId);
     log.info(requestId, `最终提示词 [skill=${contentSkillName || 'NONE'}]:`, finalPrompt.slice(0, 80));
 
+    const dim = resolveDimensions(imageRatio);
     const body = {
-      model: 'jimeng-v4',
+      req_key: 'jimeng_t2i_v40',
       prompt: finalPrompt,
-      image_ratio: imageRatio,
+      width: dim.width,
+      height: dim.height,
+      force_single: true,
+      return_url: true, // 让即梦返回图片URL，不返回 base64（避免响应体过大）
     };
-    if (imageUrl) body.image_url = imageUrl;
+    if (imageUrl) body.image_urls = [imageUrl];
 
-    const headers = getVolcengineHeaders(JIMENG_ACTION_SUBMIT, body, JIMENG_AK, JIMENG_SK, JIMENG_SERVICE, JIMENG_REGION);
-    const response = await axios.post(`${JIMENG_BASE_URL}/`, { ...body, Action: JIMENG_ACTION_SUBMIT, Service: JIMENG_SERVICE, Region: JIMENG_REGION }, { headers, timeout: AXIOS_TIMEOUT });
+    const submitReq = getVolcengineHeaders(JIMENG_ACTION_SUBMIT, body, JIMENG_AK, JIMENG_SK, JIMENG_SERVICE, JIMENG_REGION);
+    const submitUrl = `${JIMENG_BASE_URL}/?${submitReq.queryStr}`;
+    const response = await postJimengWithBackoff(submitUrl, body, submitReq.headers, requestId, 'submit');
 
-    if (response.data.ResponseMetadata?.Error) {
-      const err = response.data.ResponseMetadata.Error;
-      log.error(requestId, '即梦提交失败:', err.Code, err.Message);
-      return { code: -1, msg: '提交任务失败' };
+    const submitData = response.data || {};
+
+    // 火山引擎签名/网关层错误（鉴权、签名等）
+    if (submitData.ResponseMetadata?.Error) {
+      const err = submitData.ResponseMetadata.Error;
+      log.error(requestId, '即梦提交失败(网关):', err.Code, err.Message);
+      return { code: -1, msg: `提交任务失败: ${err.Message || err.Code || '网关错误'}` };
     }
+    // 即梦 API 业务层错误（10000 = 成功；其他都是错误）
+    if (typeof submitData.code === 'number' && submitData.code !== 10000) {
+      log.error(requestId, '即梦提交失败(业务):', submitData.code, submitData.message);
+      const userMsg = submitData.message && submitData.message.length < 80
+        ? `提交任务失败: ${submitData.message}`
+        : '提交任务失败，请检查描述或参考图';
+      return { code: -1, msg: userMsg };
+    }
+    const taskId = submitData?.Data?.task_id
+      || submitData?.Data?.taskId
+      || submitData?.Data?.TaskId
+      || submitData?.data?.task_id
+      || submitData?.data?.taskId
+      || submitData?.data?.TaskId
+      || submitData?.Result?.task_id
+      || submitData?.Result?.taskId
+      || submitData?.Result?.TaskId
+      || submitData?.task_id
+      || submitData?.taskId
+      || submitData?.TaskId;
 
-    const taskId = response.data?.Data?.task_id;
-    if (!taskId) return { code: -1, msg: '未获取到任务ID' };
+    if (!taskId) {
+      log.error(requestId, '提交响应未返回taskId', {
+        topLevelKeys: Object.keys(submitData || {}),
+        dataKeys: Object.keys(submitData?.Data || submitData?.data || submitData?.Result || {}),
+        response: JSON.stringify(submitData || {}).slice(0, 1200),
+      });
+      return { code: -1, msg: '未获取到任务ID' };
+    }
     log.info(requestId, '任务已提交:', taskId);
 
     // 轮询等待结果
     const result = await pollTaskResult(taskId, body, requestId, mode === 'img2img' ? 'i2i' : 't2i', imageFileID);
     if (result.code !== 0) return result;
 
-    // 下载并上传到云存储
-    const fileID = await downloadAndUpload(result.imageUrl, requestId);
+    // 上传到云存储：URL → 下载后上传；base64 → 解码后直接上传
+    let fileID;
+    if (result.imageUrl) {
+      fileID = await downloadAndUpload(result.imageUrl, requestId);
+    } else if (result.imageBase64) {
+      fileID = await uploadBase64ToCloud(result.imageBase64, requestId);
+    } else {
+      return { code: -1, msg: '未获取到生成结果' };
+    }
 
-    // 更新用量（下载上传成功后才计数）
+    // 更新用量（上传成功后才计数）
     await usage.incrementUsage(openid);
 
     log.info(requestId, '生成完成:', fileID);
 
-    return { code: 0, data: { fileID, url: result.imageUrl, enhancedPrompt: finalPrompt, skillName: contentSkillName } };
+    return { code: 0, data: { fileID, url: result.imageUrl || '', enhancedPrompt: finalPrompt, skillName: contentSkillName } };
   } catch (e) {
-    log.error(requestId, '生成异常:', e.message);
+    const status = e?.response?.status;
+    const respData = e?.response?.data;
+    const upstreamErr = respData?.ResponseMetadata?.Error || {};
+    log.error(requestId, '生成异常:', {
+      message: e.message,
+      status,
+      upstreamCode: upstreamErr.Code,
+      upstreamMessage: upstreamErr.Message,
+      upstreamRequestId: respData?.ResponseMetadata?.RequestId,
+      response: typeof respData === 'string' ? respData.slice(0, 400) : JSON.stringify(respData || {}).slice(0, 800),
+    });
     return { code: -1, msg: formatError(e) };
   }
 }
@@ -430,9 +558,11 @@ async function jimengImg2Img(openid, prompt, styleId, imageFileID, imageRatio, r
   return _generateImage(openid, prompt, styleId, imageRatio, requestId, imageFileID);
 }
 // ============ 轮询任务结果 ============
-const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_MS || '3000', 10); // ms
-const POLL_MAX_ATTEMPTS = parseInt(process.env.POLL_MAX_ATTEMPTS || '20', 10);
-const POLL_RETRY_LIMIT = parseInt(process.env.POLL_RETRY_LIMIT || '2', 10);
+// 即梦 v4.0 一张图通常需要 15~40 秒。轮询窗口必须覆盖此区间。
+// 默认窗口：30 × 2.5s = 75 秒（云函数 timeout=180s，留足余量给提交退避/下载/上传）
+const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_MS || '2500', 10); // ms
+const POLL_MAX_ATTEMPTS = parseInt(process.env.POLL_MAX_ATTEMPTS || '30', 10);
+const POLL_RETRY_LIMIT = parseInt(process.env.POLL_RETRY_LIMIT || '1', 10);
 
 async function pollTaskResult(taskId, submitBody, requestId, type, imageFileID) {
   let retryCount = 0;
@@ -441,17 +571,34 @@ async function pollTaskResult(taskId, submitBody, requestId, type, imageFileID) 
     await new Promise(r => setTimeout(r, POLL_INTERVAL));
 
     try {
-      const body = { task_id: taskId };
-      const headers = getVolcengineHeaders(JIMENG_ACTION_QUERY, body, JIMENG_AK, JIMENG_SK, JIMENG_SERVICE, JIMENG_REGION);
-      const response = await axios.post(`${JIMENG_BASE_URL}/`, { ...body, Action: JIMENG_ACTION_QUERY, Service: JIMENG_SERVICE, Region: JIMENG_REGION }, { headers, timeout: AXIOS_TIMEOUT });
+      const body = {
+        req_key: 'jimeng_t2i_v40',
+        task_id: taskId,
+      };
+      const queryReq = getVolcengineHeaders(JIMENG_ACTION_QUERY, body, JIMENG_AK, JIMENG_SK, JIMENG_SERVICE, JIMENG_REGION);
+      const queryUrl = `${JIMENG_BASE_URL}/?${queryReq.queryStr}`;
+      const response = await postJimengWithBackoff(queryUrl, body, queryReq.headers, requestId, 'query');
 
-      const respData = response.data?.Data;
-      const status = respData?.status;
+      const queryResp = response.data || {};
 
-      if (status === 'failed') {
+      // 即梦 API 业务层错误：code !== 10000（如内容审核拒绝、任务不存在等）
+      if (typeof queryResp.code === 'number' && queryResp.code !== 10000) {
+        log.error(requestId, '即梦查询失败(业务):', queryResp.code, queryResp.message);
+        const userMsg = queryResp.message && queryResp.message.length < 80
+          ? `生成失败: ${queryResp.message}`
+          : '生成失败，可能触发内容审核，请调整描述';
+        return { code: -1, msg: userMsg };
+      }
+
+      const respData = queryResp?.Data || queryResp?.data || queryResp?.Result || queryResp?.result || {};
+      const statusRaw = respData?.status || respData?.task_status || respData?.state || '';
+      const status = String(statusRaw).toLowerCase();
+
+      if (status === 'failed' || status === 'error' || status === 'not_found' || status === 'expired') {
+        const failReason = respData?.reason || respData?.fail_reason || respData?.message || '';
         if (retryCount < POLL_RETRY_LIMIT) {
           retryCount++;
-          log.warn(requestId, `任务失败，重新提交第${retryCount}次`);
+          log.warn(requestId, `任务失败(${failReason})，重新提交第${retryCount}次`);
           try {
             // 图生图：重新获取临时链接（旧链接可能过期）
             let resubmitBody = submitBody;
@@ -459,17 +606,22 @@ async function pollTaskResult(taskId, submitBody, requestId, type, imageFileID) 
               const freshUrl = await cloud.getTempFileURL({ fileList: [imageFileID] });
               const freshImageUrl = freshUrl.fileList[0]?.tempFileURL;
               if (freshImageUrl) {
-                resubmitBody = { ...submitBody, image_url: freshImageUrl };
+                resubmitBody = { ...submitBody, image_urls: [freshImageUrl] };
               } else {
                 log.warn(requestId, '重新获取临时链接失败，使用旧链接');
               }
             }
-            const submitHeaders = getVolcengineHeaders(JIMENG_ACTION_SUBMIT, resubmitBody, JIMENG_AK, JIMENG_SK, JIMENG_SERVICE, JIMENG_REGION);
-            const resubmit = await axios.post(`${JIMENG_BASE_URL}/`, { ...resubmitBody, Action: JIMENG_ACTION_SUBMIT, Service: JIMENG_SERVICE, Region: JIMENG_REGION }, { headers: submitHeaders, timeout: AXIOS_TIMEOUT });
-            const newTaskId = resubmit.data?.Data?.task_id;
+            const resubmitReq = getVolcengineHeaders(JIMENG_ACTION_SUBMIT, resubmitBody, JIMENG_AK, JIMENG_SK, JIMENG_SERVICE, JIMENG_REGION);
+            const resubmitUrl = `${JIMENG_BASE_URL}/?${resubmitReq.queryStr}`;
+            const resubmit = await postJimengWithBackoff(resubmitUrl, resubmitBody, resubmitReq.headers, requestId, 'resubmit');
+            const resubmitData = resubmit.data || {};
+            // 复用提交时的 taskId 解析路径
+            const newTaskId = resubmitData?.data?.task_id
+              || resubmitData?.Data?.task_id
+              || resubmitData?.Result?.task_id
+              || resubmitData?.task_id;
             if (newTaskId) {
               taskId = newTaskId;
-              retryCount = 0; // 新任务，重置计数
               log.info(requestId, `重新提交成功: ${newTaskId}`);
             } else {
               log.warn(requestId, '重新提交未返回taskId，跳过本轮');
@@ -479,26 +631,103 @@ async function pollTaskResult(taskId, submitBody, requestId, type, imageFileID) 
           }
           continue;
         }
-        return { code: -1, msg: '生成失败，请重试' };
+        return { code: -1, msg: failReason ? `生成失败: ${failReason}` : '生成失败，请调整描述后重试' };
       }
 
-      if (status === 'finished') {
-        const images = respData?.images;
-        if (images && images.length > 0) {
-          return { code: 0, imageUrl: images[0].image_url };
+      if (status === 'finished' || status === 'succeeded' || status === 'success' || status === 'done') {
+        // 优先解析 URL
+        const urlCandidates = []
+          .concat(Array.isArray(respData?.image_urls) ? respData.image_urls : [])
+          .concat(Array.isArray(respData?.images) ? respData.images : [])
+          .concat(Array.isArray(respData?.image_list) ? respData.image_list : [])
+          .concat(Array.isArray(respData?.result) ? respData.result : [])
+          .filter(Boolean);
+
+        let imageUrl = null;
+        for (const it of urlCandidates) {
+          if (typeof it === 'string' && /^https?:\/\//.test(it)) { imageUrl = it; break; }
+          if (it && typeof it === 'object') {
+            const u = it.image_url || it.url;
+            if (typeof u === 'string' && /^https?:\/\//.test(u)) { imageUrl = u; break; }
+          }
         }
+        if (!imageUrl) {
+          if (typeof respData?.image_url === 'string') imageUrl = respData.image_url;
+          else if (typeof respData?.url === 'string') imageUrl = respData.url;
+        }
+        if (imageUrl) return { code: 0, imageUrl };
+
+        // 回落：base64 数据（即梦 v4.0 默认返回 binary_data_base64）
+        const b64Arr = Array.isArray(respData?.binary_data_base64) ? respData.binary_data_base64 : null;
+        const b64 = (b64Arr && b64Arr[0])
+          || respData?.binary_data
+          || respData?.image_base64
+          || null;
+        if (b64 && typeof b64 === 'string' && b64.length > 100) {
+          return { code: 0, imageBase64: b64 };
+        }
+
+        log.error(requestId, '任务完成但未解析到图片URL或base64', {
+          topLevelKeys: Object.keys(queryResp || {}),
+          dataKeys: Object.keys(respData || {}),
+          response: JSON.stringify(queryResp || {}).slice(0, 1200),
+        });
         return { code: -1, msg: '未获取到生成结果' };
       }
 
-      log.info(requestId, `轮询 ${attempt + 1}/${POLL_MAX_ATTEMPTS}, 状态:`, status);
+      log.info(requestId, `轮询 ${attempt + 1}/${POLL_MAX_ATTEMPTS}, 状态:`, status || statusRaw || 'unknown');
     } catch (e) {
       log.warn(requestId, '轮询异常:', e.message);
     }
   }
 
-  return { code: -1, msg: '生成超时，请重试' };
+  // 注意：避免使用「超时」二字，否则客户端 errorHandler 会把它识别为 TIMEOUT 类型自动重试
+  return { code: -1, msg: 'AI 渲染时间较长，请稍后在「我的作品」查看，或重新生成' };
 }
 
+
+// ============ 上传 base64 图片到云存储 ============
+function detectImageMimeFromBuffer(buffer) {
+  if (!buffer || buffer.length < 12) return null;
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) return 'image/png';
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return 'image/jpeg';
+  // GIF: 'GIF8'
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) return 'image/gif';
+  // WEBP: 'RIFF'....'WEBP'
+  if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46
+      && buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) return 'image/webp';
+  return null;
+}
+
+async function uploadBase64ToCloud(b64, requestId) {
+  try {
+    // 去掉 data URI 前缀（若有）
+    const cleaned = b64.replace(/^data:image\/[a-zA-Z+]+;base64,/, '');
+    const buffer = Buffer.from(cleaned, 'base64');
+
+    if (buffer.length === 0) throw new Error('base64 解码后为空');
+    if (buffer.length > MAX_IMAGE_SIZE) {
+      throw new Error(`文件过大: ${buffer.length} 字节，超过限制 ${MAX_IMAGE_SIZE} 字节`);
+    }
+
+    const mime = detectImageMimeFromBuffer(buffer) || 'image/png';
+    const extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+    const ext = extMap[mime] || 'png';
+    const fileName = `${requestId}_${Date.now()}.${ext}`;
+
+    const uploadRes = await cloud.uploadFile({
+      cloudPath: `ai-results/${fileName}`,
+      fileContent: buffer,
+    });
+
+    return uploadRes.fileID;
+  } catch (e) {
+    log.error(requestId, 'base64上传失败:', e.message);
+    throw new Error('图片上传失败');
+  }
+}
 
 // ============ 下载并上传到云存储 ============
 async function downloadAndUpload(imageUrl, requestId) {
@@ -540,8 +769,65 @@ async function downloadAndUpload(imageUrl, requestId) {
   }
 }
 
+function randomNonceStr() {
+  return Math.random().toString(36).slice(2, 18);
+}
+
+function toFen(yuan) {
+  const n = Number(yuan);
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n * 100);
+}
+
+function buildWeChatMd5Sign(params, apiKey) {
+  const keys = Object.keys(params)
+    .filter(k => params[k] !== '' && params[k] !== undefined && params[k] !== null)
+    .sort();
+  const stringA = keys.map(k => `${k}=${params[k]}`).join('&');
+  const signTemp = `${stringA}&key=${apiKey}`;
+  return crypto.createHash('md5').update(signTemp, 'utf8').digest('hex').toUpperCase();
+}
+
+function objectToXml(obj) {
+  const body = Object.keys(obj)
+    .map(k => `<${k}><![CDATA[${String(obj[k])}]]></${k}>`)
+    .join('');
+  return `<xml>${body}</xml>`;
+}
+
+function parseXmlToJson(xml) {
+  const result = {};
+  if (!xml || typeof xml !== 'string') return result;
+  const cleaned = xml.replace(/<\?xml[^>]*\?>/i, '').trim();
+  const regex = /<(\w+)>(?:<!\[CDATA\[(.*?)\]\]>|([^<]*))<\/\1>/g;
+  let match;
+  while ((match = regex.exec(cleaned)) !== null) {
+    const key = match[1];
+    const cdataValue = match[2];
+    const plainValue = match[3];
+    const value = (cdataValue !== undefined ? cdataValue : plainValue || '').trim();
+    result[key] = value;
+  }
+  return result;
+}
+
+function buildClientPaySign({ timeStamp, nonceStr, pkg }) {
+  const signParams = {
+    appId: WECHAT_APPID,
+    timeStamp,
+    nonceStr,
+    package: pkg,
+    signType: 'MD5',
+  };
+  return buildWeChatMd5Sign(signParams, WECHAT_PAY_KEY);
+}
+
+function getClientIp(event) {
+  return event?.clientIP || event?.clientIp || event?.ip || '127.0.0.1';
+}
+
 // ============ 会员支付 ============
-async function createOrder(openid, plan, requestId) {
+async function createOrder(openid, plan, requestId, event = {}) {
   if (!PAY_NOTIFY_URL && !IS_TEST_MODE) {
     return { code: -1, msg: '支付服务暂不可用' };
   }
@@ -549,25 +835,133 @@ async function createOrder(openid, plan, requestId) {
   const planInfo = VIP_PRICES[plan];
   if (!planInfo) return { code: -1, msg: '不支持的套餐' };
 
+  // 演示模式已关闭，强制走真实支付流程
   if (IS_TEST_MODE) {
-    try {
-      const result = await usage.renewMembership(openid, plan);
-      log.info(requestId, '演示模式开通会员:', plan);
-      return { code: 0, demo: true, msg: '演示模式，会员已开通', data: result };
-    } catch (e) {
-      return { code: -1, msg: '开通失败' };
-    }
+    log.warn(requestId, '演示模式已禁用，拒绝测试模式请求');
+    return { code: -1, msg: '支付服务暂不可用' };
   }
 
-  return { code: -1, msg: '支付功能待配置' };
+  if (!WECHAT_APPID || !WECHAT_MCH_ID || !WECHAT_PAY_KEY || !PAY_NOTIFY_URL) {
+    log.error(requestId, '支付参数未配置完整');
+    return { code: -1, msg: '支付配置不完整' };
+  }
+
+  const totalFee = toFen(planInfo.price);
+  if (!totalFee || totalFee < 1) {
+    return { code: -1, msg: '订单金额异常' };
+  }
+
+  const outTradeNo = `vip${Date.now()}${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+  const nonceStr = randomNonceStr();
+  const spbillCreateIp = getClientIp(event);
+
+  const unifiedOrderParams = {
+    appid: WECHAT_APPID,
+    mch_id: WECHAT_MCH_ID,
+    nonce_str: nonceStr,
+    body: `${planInfo.name}-微秒相机会员`,
+    out_trade_no: outTradeNo,
+    total_fee: totalFee,
+    spbill_create_ip: spbillCreateIp,
+    notify_url: PAY_NOTIFY_URL,
+    trade_type: 'JSAPI',
+    openid,
+    sign_type: 'MD5',
+  };
+
+  unifiedOrderParams.sign = buildWeChatMd5Sign(unifiedOrderParams, WECHAT_PAY_KEY);
+
+  try {
+    const reqXml = objectToXml(unifiedOrderParams);
+    const payRes = await axios.post(WECHAT_UNIFIED_ORDER_URL, reqXml, {
+      headers: { 'Content-Type': 'text/xml; charset=utf-8' },
+      timeout: AXIOS_TIMEOUT,
+      responseType: 'text',
+      transformResponse: [data => data],
+    });
+
+    const parsed = parseXmlToJson(payRes.data || '');
+
+    if (parsed.return_code !== 'SUCCESS') {
+      log.error(requestId, '统一下单失败(return_code)', { return_msg: parsed.return_msg });
+      return { code: -1, msg: parsed.return_msg || '统一下单失败' };
+    }
+    if (parsed.result_code !== 'SUCCESS') {
+      log.error(requestId, '统一下单失败(result_code)', { err_code: parsed.err_code, err_code_des: parsed.err_code_des });
+      return { code: -1, msg: parsed.err_code_des || '统一下单失败' };
+    }
+
+    const prepayId = parsed.prepay_id;
+    if (!prepayId) {
+      return { code: -1, msg: '未获取到预支付ID' };
+    }
+
+    const nowSec = String(Math.floor(Date.now() / 1000));
+    const clientNonce = randomNonceStr();
+    const pkg = `prepay_id=${prepayId}`;
+    const paySign = buildClientPaySign({ timeStamp: nowSec, nonceStr: clientNonce, pkg });
+
+    await safeAdd('orders', {
+      openid,
+      plan,
+      planName: planInfo.name,
+      price: planInfo.price,
+      priceFen: totalFee,
+      outTradeNo,
+      prepayId,
+      status: 'pending',
+      requestId,
+      notifyUrl: PAY_NOTIFY_URL,
+      createTime: Date.now(),
+      updateTime: Date.now(),
+    });
+
+    return {
+      code: 0,
+      data: {
+        timeStamp: nowSec,
+        nonceStr: clientNonce,
+        package: pkg,
+        signType: 'MD5',
+        paySign,
+        outTradeNo,
+      },
+    };
+  } catch (e) {
+    log.error(requestId, 'createOrder异常', e.message);
+    return { code: -1, msg: formatError(e) };
+  }
 }
 
 // ============ 错误处理 ============
 function formatError(e) {
   const msg = e.message || '';
-  if (e.isAxiosError || msg.includes('ECONNREFUSED') || msg.includes('ETIMEDOUT') || msg.includes('ENOTFOUND')) return '网络连接失败';
+  const status = e?.response?.status;
+
+  // 先判断 HTTP 状态码，避免把 4xx 误报成“网络连接失败”
+  if (status === 400) {
+    const upstreamMsg = e?.response?.data?.ResponseMetadata?.Error?.Message;
+    if (upstreamMsg) return `请求参数错误：${upstreamMsg}`;
+    return '请求参数错误（请检查图生图参考图或提示词）';
+  }
+  if (status === 401 || status === 403) return 'API认证失败，请检查配置';
+  if (status === 404) return '服务地址不可用，请检查接口配置';
+  if (status === 408 || status === 504) return '请求超时，请重试';
+  if (status === 429) {
+    // 即梦并发上限：50430
+    const apiCode = e?.response?.data?.code;
+    if (apiCode === 50430) return 'AI 绘图服务繁忙，请稍候 30 秒再试';
+    return '请求过于频繁，请稍后重试';
+  }
+  if (status >= 500) return '上游服务暂时不可用，请稍后重试';
+
+  // 再判断网络层错误
+  if (msg.includes('ECONNREFUSED') || msg.includes('ETIMEDOUT') || msg.includes('ENOTFOUND') || msg.includes('socket hang up')) {
+    return '网络连接失败';
+  }
+  if (msg.includes('timeout') || msg.includes('超时')) return '请求超时，请重试';
   if (msg.includes('401') || msg.includes('认证')) return 'API认证失败，请检查配置';
   if (msg.includes('429') || msg.includes('限额') || msg.includes('rate limit')) return '请求过于频繁，请稍后重试';
-  if (msg.includes('timeout') || msg.includes('超时')) return '请求超时，请重试';
+
   return '服务暂时不可用，请稍后重试';
 }

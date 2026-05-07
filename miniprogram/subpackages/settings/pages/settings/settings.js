@@ -1,5 +1,6 @@
 // subpackages/settings/pages/settings/settings.js - 设置页面
 const { callFunction, checkLogin } = require('../../../../utils/cloud');
+const themeMod = require('../../../../utils/theme');
 
 // 获取全局导航栏高度
 function getNavBarHeight() {
@@ -23,19 +24,32 @@ Page({
     },
     themeMode: 'system',
     cacheSize: '0 KB',
+    theme: 'dark',
+    themeClass: 'theme-dark',
   },
 
   onLoad() {
     const navBarHeight = getNavBarHeight();
-    this.setData({ navBarHeight });
+    const theme = themeMod.getTheme();
+    this.setData({
+      navBarHeight,
+      theme, themeClass: themeMod.themeClass(theme),
+      themeMode: themeMod.getThemeMode(),
+    });
     this.loadUserInfo();
     this.loadSettings();
-    this.loadTheme();
     this.calculateCache();
   },
 
   onShow() {
     this.loadUserInfo();
+    const theme = themeMod.getTheme();
+    if (theme !== this.data.theme) {
+      this.setData({
+        theme, themeClass: themeMod.themeClass(theme),
+        themeMode: themeMod.getThemeMode(),
+      });
+    }
   },
 
   goBack() {
@@ -57,11 +71,6 @@ Page({
       autoSave: true,
     };
     this.setData({ settings });
-  },
-
-  loadTheme() {
-    const themeMode = wx.getStorageSync('app_theme_mode') || 'system';
-    this.setData({ themeMode });
   },
 
   calculateCache() {
@@ -88,8 +97,12 @@ Page({
 
   onThemeToggle(e) {
     const mode = e.detail.value ? 'dark' : 'light';
-    wx.setStorageSync('app_theme_mode', mode);
-    this.setData({ themeMode: mode });
+    themeMod.setTheme(mode);
+    this.setData({
+      themeMode: mode,
+      theme: mode,
+      themeClass: themeMod.themeClass(mode),
+    });
     wx.showToast({ title: '主题已切换', icon: 'success' });
   },
 

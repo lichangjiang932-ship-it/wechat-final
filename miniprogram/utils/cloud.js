@@ -1,6 +1,9 @@
 // utils/cloud.js - 云开发工具封装
-const app = getApp();
 const { logger } = require('../config/constants');
+
+function getAppSafe() {
+  try { return getApp(); } catch (_) { return null; }
+}
 
 // ==================== 云函数调用 ====================
 // silent: true 时静默调用，不显示错误提示
@@ -103,7 +106,8 @@ async function wxLogin() {
     wx.setStorageSync('token', userInfo.token);
     wx.setStorageSync('userInfo', userInfo);
 
-    if (app.globalData) {
+    const app = getAppSafe();
+    if (app && app.globalData) {
       app.globalData.userInfo = userInfo;
       app.globalData.isVip = userInfo.vipLevel !== 'free';
     }
@@ -130,7 +134,8 @@ async function phoneLogin(code) {
     wx.setStorageSync('token', userInfo.token);
     wx.setStorageSync('userInfo', userInfo);
 
-    if (app.globalData) {
+    const app = getAppSafe();
+    if (app && app.globalData) {
       app.globalData.userInfo = userInfo;
       app.globalData.isVip = userInfo.vipLevel !== 'free';
     }
@@ -152,7 +157,8 @@ function checkLogin() {
     return false;
   }
 
-  if (app.globalData) {
+  const app = getAppSafe();
+  if (app && app.globalData) {
     app.globalData.userInfo = userInfo;
     app.globalData.isVip = userInfo.vipLevel !== 'free';
   }
@@ -167,7 +173,8 @@ function logout() {
   wx.removeStorageSync('token');
   wx.removeStorageSync('userInfo');
 
-  if (app.globalData) {
+  const app = getAppSafe();
+  if (app && app.globalData) {
     app.globalData.userInfo = null;
     app.globalData.isVip = false;
   }

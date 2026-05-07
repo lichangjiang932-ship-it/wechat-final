@@ -1,106 +1,218 @@
-<!-- pages/my/my.wxml - 我的页面 -->
-<view class="page">
+<!-- My · Profile editorial -->
+<view class="page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
 
-  <!-- 导航 -->
-  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
-    <view class="nav-inner" style="min-height: 44px;">
-      <text class="nav-title">我的</text>
+  <scroll-view scroll-y class="scroll" style="padding-top: {{statusBarHeight}}px;">
+
+    <!-- Header -->
+    <view class="head">
+      <text class="label head-eyebrow">{{i18n['my.account']}}</text>
+      <view class="ic ic-cog tap" bindtap="openSettingsSheet"/>
     </view>
-  </view>
 
-  <!-- 头部 -->
-  <view class="user-header" style="padding-top: {{navBarHeight}}px;">
-    <view class="user-bg"></view>
-    <view class="user-card">
-      <block wx:if="{{userInfo}}">
-        <!-- 已登录状态 -->
-        <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
-        <view class="user-info">
-          <text class="user-name">{{userInfo.nickName}}</text>
-          <view class="vip-badge" wx:if="{{isVip}}">会员</view>
+    <!-- Avatar row -->
+    <view class="avatar-row tap" bindtap="onLoginTap">
+      <view class="avatar-wrap ph ph-warm">
+        <image wx:if="{{userInfo.avatarUrl}}" class="avatar-img" src="{{userInfo.avatarUrl}}" mode="aspectFill"/>
+      </view>
+      <view class="avatar-info">
+        <view class="name-row">
+          <text class="display name-text">{{userInfo.nickName || 'Guest'}}</text><text class="display display-italic name-dot">.</text>
         </view>
-      </block>
-      <block wx:else>
-        <!-- 未登录状态 - 简化为一键登录 -->
-        <image class="user-avatar avatar-empty" src="/images/default-avatar.png" mode="aspectFill" />
-        <view class="user-info">
-          <text class="user-name guest-name">未登录</text>
-          <view class="wx-login-btn active" bindtap="onLoginTap">
-            <text>微信一键登录</text>
+        <text class="label name-meta">@{{handle}} · {{memberDays}} DAYS</text>
+      </view>
+    </view>
+
+    <!-- 5-stat row -->
+    <view class="stats-row">
+      <view class="stat-cell">
+        <text class="display stat-n">{{creationsCount}}</text>
+        <text class="label stat-l">{{i18n['my.stat.works']}}</text>
+      </view>
+      <view class="stat-cell">
+        <text class="display stat-n">{{likesCount || 0}}</text>
+        <text class="label stat-l">{{i18n['my.stat.likes'] || 'LIKED'}}</text>
+      </view>
+      <view class="stat-cell">
+        <text class="display stat-n">{{favoritesCount}}</text>
+        <text class="label stat-l">{{i18n['my.stat.saved']}}</text>
+      </view>
+      <view class="stat-cell">
+        <text class="display stat-n">{{sharedCount || 0}}</text>
+        <text class="label stat-l">{{i18n['my.stat.shared']}}</text>
+      </view>
+      <view class="stat-cell">
+        <text class="display stat-n">{{viewsText}}</text>
+        <text class="label stat-l">{{i18n['my.stat.views']}}</text>
+      </view>
+    </view>
+
+    <!-- Membership card -->
+    <view class="vip-card tap" bindtap="openMember">
+      <view class="vip-ring vip-ring-outer"/>
+      <view class="vip-ring vip-ring-inner"/>
+      <view class="vip-body">
+        <view class="vip-head">
+          <view class="ic ic-crown vip-crown"/>
+          <text class="label vip-label">{{i18n['my.vip.brand']}}</text>
+        </view>
+        <text class="display vip-title">{{i18n['member.title.1']}}</text>
+        <text class="display display-italic vip-title">{{i18n['member.title.2']}}</text>
+        <view class="vip-foot">
+          <view class="vip-price-row">
+            <text class="display vip-price">¥19.9</text>
+            <text class="vip-unit">{{i18n['my.vip.unit']}}</text>
+          </view>
+          <view class="vip-upgrade">
+            <text wx:if="{{usageInfo.isVip}}">{{i18n['my.vip.member']}}</text>
+            <text wx:else>{{i18n['my.vip.upgrade']}}</text>
           </view>
         </view>
-      </block>
-    </view>
-  </view>
-
-  <!-- 统计 -->
-  <view class="stats-row">
-    <view class="stat">
-      <text class="stat-num">{{stats.createCount}}</text>
-      <text class="stat-label">创作</text>
-    </view>
-    <view class="stat-divider"></view>
-    <view class="stat">
-      <text class="stat-num">{{stats.favorites}}</text>
-      <text class="stat-label">收藏</text>
-    </view>
-    <view class="stat-divider"></view>
-    <view class="stat">
-      <text class="stat-num">{{stats.shares}}</text>
-      <text class="stat-label">分享</text>
-    </view>
-  </view>
-
-  <!-- 菜单 -->
-  <view class="menu-card">
-    <view class="menu-item" wx:for="{{menuItems}}" wx:key="id"
-      bindtap="onMenuTap" data-id="{{item.id}}">
-      <view class="menu-left">
-        <view class="menu-icon">{{item.icon}}</view>
-        <text class="menu-name">{{item.name}}</text>
       </view>
-      <text class="menu-arrow">›</text>
+    </view>
+
+    <!-- Menu list -->
+    <view class="menu-list">
+      <view class="menu-row tap" bindtap="goHistory">
+        <view class="ic ic-grid menu-ic"/>
+        <view class="menu-text">
+          <text class="menu-n">{{i18n['my.menu.works']}}</text>
+          <text class="label menu-en">{{i18n['my.menu.works.sub']}}</text>
+        </view>
+        <text class="label menu-k">{{creationsCount}}</text>
+        <view class="ic ic-chev menu-chev"/>
+      </view>
+      <view class="menu-row tap" bindtap="goLikes">
+        <view class="ic ic-heart menu-ic"/>
+        <view class="menu-text">
+          <text class="menu-n">{{i18n['my.menu.likes'] || '喜欢'}}</text>
+          <text class="label menu-en">{{i18n['my.menu.likes.sub'] || 'LIKED WORKS'}}</text>
+        </view>
+        <text class="label menu-k">{{likesCount || 0}}</text>
+        <view class="ic ic-chev menu-chev"/>
+      </view>
+      <view class="menu-row tap" bindtap="goUpload">
+        <view class="ic ic-upload menu-ic"/>
+        <view class="menu-text">
+          <text class="menu-n">{{i18n['my.menu.uploads']}}</text>
+          <text class="label menu-en">{{i18n['my.menu.uploads.sub']}}</text>
+        </view>
+        <text class="label menu-k">{{downloadsCount || 0}}</text>
+        <view class="ic ic-chev menu-chev"/>
+      </view>
+      <view class="menu-row tap" bindtap="goPoster">
+        <view class="ic ic-poster menu-ic"/>
+        <view class="menu-text">
+          <text class="menu-n">{{i18n['my.menu.poster'] || '我的海报'}}</text>
+          <text class="label menu-en">{{i18n['my.menu.poster.sub'] || 'KIDS · SHOWCASE'}}</text>
+        </view>
+        <text class="label menu-k">NEW</text>
+        <view class="ic ic-chev menu-chev"/>
+      </view>
+      <view class="menu-row tap" bindtap="openSettingsSheet">
+        <view class="ic ic-cog menu-ic"/>
+        <view class="menu-text">
+          <text class="menu-n">{{i18n['my.settings']}}</text>
+          <text class="label menu-en">{{i18n['my.menu.prefs.sub']}}</text>
+        </view>
+        <text class="label menu-k">{{lang === 'zh' ? '中文' : 'EN'}} · {{theme === 'light' ? i18n['my.theme.light'] : i18n['my.theme.dark']}}</text>
+        <view class="ic ic-chev menu-chev"/>
+      </view>
+    </view>
+
+    <!-- Footer brand -->
+    <view class="foot">
+      <text class="display display-italic foot-brand">Miaosec</text>
+      <text class="label foot-version">VERSION 1.1.0</text>
+    </view>
+
+    <view class="dock-spacer"/>
+  </scroll-view>
+
+  <!-- Login popup -->
+  <view class="popup-mask {{showLoginPopup ? '' : 'hidden'}}" bindtap="closeLoginPopup" catchtouchmove="preventTap"/>
+  <view class="popup-sheet login-sheet {{showLoginPopup ? 'show' : ''}}" catchtouchmove="preventTap">
+    <view class="popup-handle"/>
+
+    <view class="login-head">
+      <text class="label login-eyebrow">{{i18n['login.eyebrow']}}</text>
+      <text class="display login-title">{{i18n['login.title1']}}</text>
+      <text class="display display-italic login-title-it">{{i18n['login.title2']}}</text>
+      <text class="login-sub">{{i18n['login.sub']}}</text>
+    </view>
+
+    <view class="login-fields">
+      <view class="login-field">
+        <text class="label login-field-label">{{i18n['login.avatar']}}</text>
+        <button class="login-avatar-btn" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+          <image wx:if="{{tempAvatar}}" class="login-avatar-img" src="{{tempAvatar}}" mode="aspectFill"/>
+          <block wx:else>
+            <view class="login-avatar-plus">+</view>
+            <text class="login-avatar-hint">{{i18n['login.avatar.hint']}}</text>
+          </block>
+        </button>
+      </view>
+
+      <view class="login-field">
+        <text class="label login-field-label">{{i18n['login.name']}}</text>
+        <view class="login-input-box">
+          <input class="login-input" type="nickname" placeholder="{{i18n['login.name.placeholder']}}" placeholder-class="login-ph"
+            value="{{tempNickName}}" bindinput="onNickNameInput" bindblur="onNickNameConfirm"/>
+        </view>
+      </view>
+    </view>
+
+    <view class="login-actions">
+      <view class="btn-ember tap" bindtap="confirmLogin">
+        <text>{{i18n['login.confirm']}}</text>
+      </view>
+      <text class="login-policy">{{i18n['login.policy.prefix']}} <text class="login-link">{{i18n['login.policy.tos']}}</text> {{i18n['login.policy.sep']}} <text class="login-link">{{i18n['login.policy.privacy']}}</text></text>
     </view>
   </view>
 
-  <!-- 底部 -->
-  <view class="footer safe-bottom">
-    <text class="footer-text">照片工坊 v1.0</text>
-  </view>
+  <!-- Settings popup (language + theme) -->
+  <view class="popup-mask {{showSettingsSheet ? '' : 'hidden'}}" bindtap="closeSettingsSheet"/>
+  <view class="popup-sheet settings-sheet {{showSettingsSheet ? 'show' : ''}}">
+    <view class="popup-handle"/>
+    <view class="settings-head">
+      <text class="label settings-eyebrow">{{i18n['my.prefs.eyebrow']}}</text>
+      <text class="display settings-title">{{i18n['my.title.1']}}</text>
+      <text class="display display-italic settings-title-it">{{i18n['my.title.2']}}</text>
+    </view>
 
-  <!-- 登录弹窗 -->
-  <view class="login-mask {{showLoginPopup ? 'show' : ''}}" bindtap="closeLoginPopup"></view>
-  <view class="login-popup {{showLoginPopup ? 'show' : ''}}">
-    <view class="popup-handle" bindtap="closeLoginPopup"></view>
-    <view class="popup-content" catchtap="preventTap">
-      <text class="popup-title">微信登录</text>
-      <text class="popup-desc">授权头像和昵称，快速登录</text>
-
-      <!-- 头像选择 -->
-      <button class="popup-avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-        <image class="popup-avatar" src="{{tempAvatar || '/images/default-avatar.png'}}" mode="aspectFill" />
-        <text class="popup-avatar-tip">{{tempAvatar ? '更换头像' : '选择头像'}}</text>
-      </button>
-
-      <!-- 昵称输入 -->
-      <view class="popup-input-wrap">
-        <input
-          type="nickname"
-          class="popup-input"
-          placeholder="点击输入昵称"
-          placeholder-class="popup-input-ph"
-          value="{{tempNickName}}"
-          bindinput="onNickNameInput"
-          bindconfirm="onNickNameConfirm"
-        />
+    <view class="settings-group">
+      <text class="label settings-group-label">{{i18n['my.lang']}}</text>
+      <view class="settings-seg">
+        <view class="settings-seg-cell {{lang === 'zh' ? 'on' : ''}} tap" data-v="zh" bindtap="pickLang">
+          <text class="settings-seg-n">中文</text>
+          <text class="label settings-seg-en">ZH</text>
+        </view>
+        <view class="settings-seg-cell {{lang === 'en' ? 'on' : ''}} tap" data-v="en" bindtap="pickLang">
+          <text class="settings-seg-n">English</text>
+          <text class="label settings-seg-en">EN</text>
+        </view>
       </view>
+    </view>
 
-      <!-- 登录按钮 -->
-      <view class="popup-login-btn" bindtap="confirmLogin">
-        <text>确认登录</text>
+    <view class="settings-group">
+      <text class="label settings-group-label">{{i18n['my.theme']}}</text>
+      <view class="settings-seg">
+        <view class="settings-seg-cell {{theme === 'dark' ? 'on' : ''}} tap" data-v="dark" bindtap="pickTheme">
+          <view class="settings-swatch swatch-dark"/>
+          <text class="settings-seg-n">{{i18n['my.theme.dark']}}</text>
+          <text class="label settings-seg-en">{{i18n['my.theme.dark.sub']}}</text>
+        </view>
+        <view class="settings-seg-cell {{theme === 'light' ? 'on' : ''}} tap" data-v="light" bindtap="pickTheme">
+          <view class="settings-swatch swatch-light"/>
+          <text class="settings-seg-n">{{i18n['my.theme.light']}}</text>
+          <text class="label settings-seg-en">{{i18n['my.theme.light.sub']}}</text>
+        </view>
       </view>
+    </view>
 
-      <text class="popup-tips">点击头像选择 → 输入昵称 → 自动登录</text>
+    <view class="settings-actions">
+      <view class="btn-ember tap" bindtap="closeSettingsSheet">
+        <text>{{i18n['common.confirm']}}</text>
+      </view>
     </view>
   </view>
 

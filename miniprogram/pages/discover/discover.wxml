@@ -1,115 +1,96 @@
-<!-- 发现页 - 暖感真实风 -->
-<view class="page">
-
-  <!-- 导航 -->
+<view class="page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
   <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
-    <view class="nav-inner">
-      <text class="nav-title">发现</text>
-      <view class="nav-search" bindtap="toggleSearch">
-        <text class="search-icon">{{showSearch ? '✕' : '🔍'}}</text>
+    <view class="nav-inner" style="min-height: 44px;">
+      <view>
+        <text class="nav-title">作品展</text>
+        <text class="nav-sub">挑选你喜欢的风格</text>
+      </view>
+      <view class="search-btn tap" bindtap="toggleSearch">
+        <text>搜索</text>
       </view>
     </view>
   </view>
 
-  <!-- 搜索栏 -->
   <view class="search-bar {{showSearch ? 'show' : ''}}" style="top: {{navBarHeight}}px;">
-    <view class="search-input-wrap">
-      <text class="search-icon-left">🔍</text>
-      <input
-        class="search-input"
-        placeholder="搜索作品..."
-        placeholder-class="search-ph"
-        value="{{searchKeyword}}"
-        bindinput="onSearchInput"
-        focus="{{searchFocus}}"
-        confirm-type="search"
-      />
-      <text class="search-clear" wx:if="{{searchKeyword}}" bindtap="clearSearch">✕</text>
+    <input class="search-input" placeholder="搜索作品或关键词"
+           value="{{searchKeyword}}" bindinput="onSearchInput"
+           focus="{{searchFocus}}" />
+    <text class="search-cancel tap" bindtap="toggleSearch">取消</text>
+  </view>
+
+  <scroll-view scroll-x enhanced show-scrollbar="{{false}}" class="tabs" style="top: {{navBarHeight}}px;">
+    <view class="tab-list">
+      <view class="tab-item {{activeTab === item ? 'active' : ''}} tap"
+            wx:for="{{tabs}}" wx:key="*this"
+            bindtap="switchTab" data-tab="{{item}}">
+        <text class="tab-text">{{item}}</text>
+      </view>
     </view>
-  </view>
-
-  <!-- 分类 -->
-  <view class="sticky-bar" style="top: {{navBarHeight}}px;">
-    <scroll-view scroll-x class="tab-scroll" enhanced show-scrollbar="{{false}}">
-      <view class="tab-list">
-        <view class="tab-item {{activeTab === item ? 'active' : ''}}"
-          wx:for="{{tabs}}" wx:key="*this"
-          bindtap="switchTab" data-tab="{{item}}">{{item}}</view>
-      </view>
-    </scroll-view>
-  </view>
-
-  <!-- 瀑布流 -->
-  <scroll-view
-    scroll-y
-    class="scroll-area"
-    style="padding-top: calc({{navBarHeight}}px + 80rpx + 16rpx);"
-    bindscrolltolower="loadMore"
-    refresher-enabled
-    refresher-triggered="{{refreshing}}"
-    bindrefresherrefresh="onRefresh"
-  >
-    <!-- 骨架屏 -->
-    <block wx:if="{{loading}}">
-      <view class="waterfall">
-        <view class="waterfall-col">
-          <view class="skeleton-card"><view class="skeleton-img skeleton"></view><view class="skeleton-text skeleton"></view></view>
-          <view class="skeleton-card"><view class="skeleton-img skeleton"></view><view class="skeleton-text skeleton"></view></view>
-        </view>
-        <view class="waterfall-col">
-          <view class="skeleton-card"><view class="skeleton-img skeleton"></view><view class="skeleton-text skeleton"></view></view>
-          <view class="skeleton-card"><view class="skeleton-img skeleton"></view><view class="skeleton-text skeleton"></view></view>
-        </view>
-      </view>
-    </block>
-
-    <!-- 空状态 -->
-    <block wx:elif="{{leftCol.length === 0 && rightCol.length === 0}}">
-      <view class="empty-state">
-        <text class="empty-icon">🔍</text>
-        <text class="empty-text">暂无相关作品</text>
-        <text class="empty-hint" wx:if="{{searchKeyword}}">换个关键词试试</text>
-      </view>
-    </block>
-
-    <!-- 内容 -->
-    <block wx:else>
-      <view class="waterfall">
-        <view class="waterfall-col">
-          <view class="work-card tap-light" wx:for="{{leftCol}}" wx:key="id">
-            <image class="work-img" src="{{item.cover}}" mode="aspectFill" style="height: {{item.h}}rpx;" lazy-load catchtap="onImageTap" data-item="{{item}}"/>
-            <view class="work-info">
-              <text class="work-title">{{item.title}}</text>
-              <view class="work-footer">
-                <view class="work-meta">
-                  <text class="likes-text">{{item.likes}} 赞</text>
-                  <view class="favorite-btn {{item.isFavorited ? 'active' : ''}}" catchtap="onToggleFavorite" data-item="{{item}}">❤️</view>
-                </view>
-                <view class="make-same-btn-discover" catchtap="onMakeSame" data-item="{{item}}">做同款</view>
-              </view>
-            </view>
-          </view>
-        </view>
-        <view class="waterfall-col">
-          <view class="work-card tap-light" wx:for="{{rightCol}}" wx:key="id">
-            <image class="work-img" src="{{item.cover}}" mode="aspectFill" style="height: {{item.h}}rpx;" lazy-load catchtap="onImageTap" data-item="{{item}}"/>
-            <view class="work-info">
-              <text class="work-title">{{item.title}}</text>
-              <view class="work-footer">
-                <view class="work-meta">
-                  <text class="likes-text">{{item.likes}} 赞</text>
-                  <view class="favorite-btn {{item.isFavorited ? 'active' : ''}}" catchtap="onToggleFavorite" data-item="{{item}}">❤️</view>
-                </view>
-                <view class="make-same-btn-discover" catchtap="onMakeSame" data-item="{{item}}">做同款</view>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
-      <view class="load-more" wx:if="{{hasMore}}">加载中...</view>
-      <view class="no-more" wx:else>~ 已经到底啦 ~</view>
-    </block>
-
   </scroll-view>
 
+  <scroll-view scroll-y enhanced show-scrollbar="{{false}}"
+              class="feed-wrap"
+              style="padding-top: calc({{navBarHeight}}px + 80rpx + 8rpx);"
+              bindscrolltolower="loadMore"
+              refresher-enabled refresher-triggered="{{refreshing}}"
+              bindrefresherrefresh="onRefresh">
+
+    <view class="sec sec-last" wx:if="{{!loading || displayWorks.length}}">
+      <view class="sec-head">
+        <view>
+          <text class="eyebrow sec-sub-eyebrow">来自社区</text>
+          <view class="sec-title-row">
+            <text class="display sec-title">他们的镜头</text>
+            <text class="display display-italic sec-title-it">今日心事</text>
+          </view>
+        </view>
+        <text class="eyebrow sec-count">{{displayWorks.length}} 件作品</text>
+      </view>
+
+      <view class="waterfall">
+        <view class="wf-col">
+          <view class="work-card tap" wx:for="{{leftWorks}}" wx:key="id" wx:for-item="work" bindtap="onWorkTap" data-item="{{work}}">
+            <view class="work-cover ratio-{{work.ratioClass}}">
+              <image wx:if="{{work.cover}}" class="work-img" src="{{work.cover}}" mode="aspectFill" lazy-load />
+              <view wx:else class="work-img ph ph-fog"/>
+            </view>
+            <view class="work-meta">
+              <text class="work-title">{{work.title || '未命名作品'}}</text>
+              <view class="work-sub">
+                <text class="work-by">{{work.by}}</text>
+                <text class="work-like">❤ {{work.likes || 0}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="wf-col">
+          <view class="work-card tap" wx:for="{{rightWorks}}" wx:key="id" wx:for-item="work" bindtap="onWorkTap" data-item="{{work}}">
+            <view class="work-cover ratio-{{work.ratioClass}}">
+              <image wx:if="{{work.cover}}" class="work-img" src="{{work.cover}}" mode="aspectFill" lazy-load />
+              <view wx:else class="work-img ph ph-fog"/>
+            </view>
+            <view class="work-meta">
+              <text class="work-title">{{work.title || '未命名作品'}}</text>
+              <view class="work-sub">
+                <text class="work-by">{{work.by}}</text>
+                <text class="work-like">❤ {{work.likes || 0}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="loading-row" wx:if="{{loading}}">
+      <view class="spinner"/>
+    </view>
+
+    <view class="empty-state" wx:if="{{empty && !loading}}">
+      <text class="empty-text">还没有作品</text>
+      <text class="empty-hint">上传第一张，点亮这个分类</text>
+    </view>
+
+    <view class="dock-spacer"/>
+  </scroll-view>
 </view>

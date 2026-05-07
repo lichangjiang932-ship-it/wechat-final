@@ -1,5 +1,9 @@
 // config/data.js - 页面静态数据配置
 
+// ==================== 云存储图片根路径 ====================
+const CLOUD_BASE = 'cloud://cloud1-d8glhp7pdcd3fffba.636c-cloud1-d8glhp7pdcd3fffba-1423601483/images/';
+const img = (name) => CLOUD_BASE + name;
+
 // ==================== 首页 - 分类入口 ====================
 const CATEGORIES = [
   { id: 'portrait', name: '写真', icon: '/images/icons/camera.png', bg: '#FBF0E6' },
@@ -13,63 +17,61 @@ const CATEGORIES = [
 // ==================== 首页 - Banner 文案 ====================
 const BANNERS = [
   {
-    bg: 'warm',
-    emoji: '📸',
+    cover: img('cover-portrait.jpg'),
     badge: '本周热门',
-    title: '给自己拍套写真',
-    desc: '不用去照相馆，在家就能拍',
-    btnText: '试试看',
+    title: '琥珀时刻',
+    desc: '记录当下最温柔的光线',
+    btnText: '探索',
   },
   {
-    bg: 'soft',
-    emoji: '🎨',
+    cover: img('cover-art.jpg'),
     badge: '',
     title: '画出心里的画面',
     desc: '想画什么，说出来就行',
     btnText: '开始画',
   },
   {
-    bg: 'sage',
-    emoji: '✨',
+    cover: img('cover-chinese.jpg'),
     badge: '新上线',
-    title: '证件照也能很好看',
-    desc: '自动换背景，自然又精神',
+    title: '国风写真',
+    desc: '东方美学，一镜千年',
     btnText: '制作',
   },
 ];
 
 // ==================== 首页 - 热门模板 ====================
 const HOT_TEMPLATES = [
-  { id: 't1', name: '证件照', tag: '热门', tagType: 'hot', cover: '/images/covers/cover-portrait.jpg', uses: '12.8万' },
-  { id: 't2', name: '日系写真', tag: '新品', tagType: 'new', cover: '/images/covers/cover-art.jpg', uses: '8.6万' },
-  { id: 't3', name: '国风', tag: '', tagType: '', cover: '/images/covers/cover-chinese.jpg', uses: '6.3万' },
-  { id: 't4', name: '水彩风', tag: '', tagType: '', cover: '/images/covers/cover-watercolor.jpg', uses: '5.1万' },
-  { id: 't5', name: '老照片修复', tag: '', tagType: '', cover: '/images/covers/cover-cyberpunk.jpg', uses: '4.8万' },
+  { id: 't1', name: '证件照',   tag: '热门', tagType: 'hot', cover: img('cover-portrait.jpg'),   uses: '12.8万' },
+  { id: 't2', name: '日系写真', tag: '新品', tagType: 'new', cover: img('cover-art.jpg'),        uses: '8.6万' },
+  { id: 't3', name: '国风',     tag: '',     tagType: '',    cover: img('cover-chinese.jpg'),     uses: '6.3万' },
+  { id: 't4', name: '水彩风',   tag: '',     tagType: '',    cover: img('cover-watercolor.jpg'),  uses: '5.1万' },
+  { id: 't5', name: '赛博朋克', tag: '',     tagType: '',    cover: img('cover-cyberpunk.jpg'),   uses: '4.8万' },
 ];
 
 // ==================== 首页 - 灵感画廊图片 ====================
 const INSPIRE_IMAGES = {
-  warm: '/images/covers/inspire-warm.jpg',
-  cream: '/images/covers/cover-anime.jpg',
-  sage: '/images/covers/cover-clay.jpg',
-  sunset: '/images/covers/cover-portrait.jpg',
-  rose: '/images/covers/cover-chinese.jpg',
+  warm:  img('inspire-warm.jpg'),
+  cream: img('cover-anime.jpg'),
+  sage:  img('cover-clay.jpg'),
+  rose:  img('cover-chinese.jpg'),
+  cyber: img('cover-cyberpunk.jpg'),
 };
 
 // ==================== 首页 - 社区精选图片 ====================
 const COMMUNITY_IMAGES = [
-  '/images/covers/cover-portrait.jpg',
-  '/images/covers/cover-art.jpg',
-  '/images/covers/cover-chinese.jpg',
-  '/images/covers/cover-cyberpunk.jpg',
-  '/images/covers/cover-clay.jpg',
-  '/images/covers/cover-watercolor.jpg',
+  img('cover-portrait.jpg'),
+  img('cover-art.jpg'),
+  img('cover-chinese.jpg'),
+  img('cover-cyberpunk.jpg'),
+  img('cover-clay.jpg'),
+  img('cover-watercolor.jpg'),
 ];
 
 // ==================== 创作页 - 创作模式 ====================
+// icon 字段为 SVG class（wxml 可拼 "ic ic-{{mode.icon}}"）
 const CREATE_MODES = [
-  { id: 'text2img', name: 'AI绘画', icon: '🎨', desc: '文字生成图片' },
-  { id: 'img2img', name: '图生图', icon: '🖼️', desc: '照片变风格' },
+  { id: 'text2img', name: 'AI绘画', icon: 'spark',  desc: '文字生成图片' },
+  { id: 'img2img',  name: '图生图', icon: 'camera', desc: '照片变风格'   },
 ];
 
 // ==================== 创作页 - 画幅比例 ====================

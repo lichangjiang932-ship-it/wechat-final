@@ -1,57 +1,69 @@
-<!-- 我的作品页面 -->
-<view class="page">
-  
-  <!-- 自定义导航栏组件 -->
-  <nav-bar 
-    title="我的作品"
-    show-back="{{true}}"
-  >
-    <view class="nav-count" wx:if="{{works.length > 0}}">
-      <text>{{works.length}}</text>
-    </view>
-  </nav-bar>
+<!-- 我的作品 · Dark editorial -->
+<view class="page {{themeClass}}">
 
-  <!-- 内容区域 -->
+  <!-- Nav bar -->
+  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner" style="min-height: 44px;">
+      <view class="nav-back tap" bindtap="goBack">
+        <view class="ic ic-back nav-back-icon"/>
+      </view>
+      <text class="label nav-title">MY WORKS · 作品</text>
+      <view class="nav-count">
+        <text wx:if="{{works.length > 0}}">{{works.length}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Content -->
   <scroll-view
     scroll-y
-    class="content"
-    style="padding-top: {{navBarHeight}}px;"
+    class="scroll"
+    style="padding-top: calc({{navBarHeight}}px + {{statusBarHeight}}px);"
     refresher-enabled
     refresher-triggered="{{refreshing}}"
-    bindrefresherrefresh="onRefresh"
-  >
-    <!-- 加载中 -->
-    <view class="loading-state" wx:if="{{loading && works.length === 0}}">
-      <view class="spinner rotate"></view>
-      <text>加载中...</text>
+    bindrefresherrefresh="onRefresh">
+
+    <!-- Header headline — gives breathing space below the nav -->
+    <view class="head">
+      <text class="display d-big">你的</text>
+      <text class="display display-italic d-big">作品集</text>
     </view>
 
-    <!-- 空状态组件 -->
-    <empty-state 
-      wx:elif="{{empty}}"
-      icon="🎨"
-      title="暂无作品"
-      desc="去创作页开始你的第一张作品吧"
-      action-text="去创作"
-      bind:action="goCreate"
-    />
+    <!-- Loading -->
+    <view class="loading-row" wx:if="{{loading && works.length === 0}}">
+      <view class="spinner"/>
+    </view>
 
-    <!-- 作品列表 -->
-    <block wx:else>
-      <view class="works-grid">
-        <view class="work-item" wx:for="{{works}}" wx:key="id">
-          <image class="work-image" src="{{item.url}}" mode="aspectFill" lazy-load bindtap="onPreview" data-index="{{index}}"/>
-          <view class="work-info">
-            <text class="work-title">{{item.title || '作品'}}</text>
-            <text class="work-time">{{item.time}}</text>
-          </view>
-          <view class="work-actions">
-            <view class="action-btn" bindtap="onSave" data-item="{{item}}">保存</view>
-            <view class="action-btn danger" bindtap="onDelete" data-item="{{item}}">删除</view>
+    <!-- Empty -->
+    <view class="empty" wx:elif="{{empty}}">
+      <view class="ic ic-grid" style="background: var(--cream-4); width: 72rpx; height: 72rpx;"/>
+      <text class="display empty-title">还没有作品</text>
+      <text class="label empty-sub">去创作页创作或上传图片，作品会显示在这里</text>
+      <view class="btn-ember empty-btn tap" bindtap="goCreate">
+        <text>开始创作 →</text>
+      </view>
+    </view>
+
+    <!-- Story list（同首页「他们的镜头 / 今日心事」布局） -->
+    <view class="story-list" wx:else>
+      <view class="story-row tap" wx:for="{{works}}" wx:key="id"
+            bindtap="onPreview" data-index="{{item._index}}">
+        <text class="display display-italic story-num">{{item.seq}}</text>
+        <view class="story-body">
+          <text class="display story-t">{{item.title || item.style || '作品'}}</text>
+          <text class="label story-meta">{{item.style || 'AI WORK'}}<text wx:if="{{item.time}}"> · {{item.time}}</text></text>
+          <view class="story-actions">
+            <text class="story-act tap" catchtap="onMakeSame" data-item="{{item}}">同款</text>
+            <text class="story-act tap" catchtap="onSave" data-item="{{item}}">保存</text>
+            <text class="story-act danger tap" catchtap="onDelete" data-item="{{item}}">删除</text>
           </view>
         </view>
+        <image class="story-thumb" src="{{item.url}}" mode="aspectFill" lazy-load
+               binderror="onImgError" data-id="{{item.id}}"/>
       </view>
-      <view class="list-bottom">~ 共 {{works.length}} 个作品 ~</view>
-    </block>
+    </view>
+
+    <view class="list-bottom" wx:if="{{works.length > 0}}">~ 共 {{works.length}} 个作品 ~</view>
+    <view class="safe-bottom"/>
   </scroll-view>
 </view>

@@ -1,58 +1,75 @@
-// subpackages/member/pages/member/member.js - 会员页面
+// subpackages/member/pages/member/member.js - Editorial membership page
 const { callFunction, checkLogin } = require('../../../../utils/cloud');
+const { computeNavBar } = require('../../../../utils/common');
+const i18n = require('../../../../utils/i18n');
+const themeMod = require('../../../../utils/theme');
 
-// 获取全局导航栏高度
-function getNavBarHeight() {
-  try {
-    const app = getApp();
-    return app.globalData.navBarHeight || 88;
-  } catch (e) {
-    return 88;
-  }
-}
+const PERKS = [
+  { n: 1, titleKey: 'member.perk.unlimited', subKey: 'member.perk.unlimited.sub' },
+  { n: 2, titleKey: 'member.perk.hd',        subKey: 'member.perk.hd.sub' },
+  { n: 3, titleKey: 'member.perk.styles',    subKey: 'member.perk.styles.sub' },
+  { n: 4, titleKey: 'member.perk.priority',  subKey: 'member.perk.priority.sub' },
+];
 
 Page({
   data: {
-    userInfo: null,
+    userInfo: {},
     vipLevel: 'free',
-    vipLevelText: '普通用户',
     vipExpireTime: '',
-    selectedPlan: 'month',
-    navBarHeight: 88,
+    selectedPlan: 'year',   // default to most editorial / best-value plan
+    navBarHeight: 44,
+    statusBarHeight: 20,
+    lang: 'zh',
+    theme: 'dark',
+    themeClass: 'theme-dark',
+    i18n: {},
+    perks: PERKS,
+  },
+
+  _applyLang(lang) {
+    this.setData({ lang, i18n: i18n.pack(lang) });
   },
 
   onLoad() {
-    const navBarHeight = getNavBarHeight();
-    this.setData({ navBarHeight });
+    const { navBarHeight, statusBarHeight } = computeNavBar();
+    const lang = i18n.getLang();
+    const theme = themeMod.getTheme();
+    this.setData({
+      navBarHeight,
+      statusBarHeight,
+      theme,
+      themeClass: themeMod.themeClass(theme),
+    });
+    this._applyLang(lang);
     this.loadUserInfo();
   },
 
   onShow() {
+    const lang = i18n.getLang();
+    const theme = themeMod.getTheme();
+    if (lang !== this.data.lang) this._applyLang(lang);
+    if (theme !== this.data.theme) {
+      this.setData({ theme, themeClass: themeMod.themeClass(theme) });
+    }
     this.loadUserInfo();
-  },
-
-  goBack() {
-    wx.navigateBack();
   },
 
   loadUserInfo() {
     const userInfo = wx.getStorageSync('userInfo') || {};
-    let vipLevelText = '普通用户';
-    if (userInfo.vipLevel === 'month') vipLevelText = '月度会员';
-    if (userInfo.vipLevel === 'year') vipLevelText = '年度会员';
-
     let vipExpireTime = '';
     if (userInfo.vipExpireTime) {
-      const date = new Date(userInfo.vipExpireTime);
-      vipExpireTime = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const d = new Date(userInfo.vipExpireTime);
+      vipExpireTime = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
-
     this.setData({
       userInfo,
       vipLevel: userInfo.vipLevel || 'free',
-      vipLevelText,
       vipExpireTime,
     });
+  },
+
+  goBack() {
+    wx.navigateBack({ delta: 1, fail: () => wx.switchTab({ url: '/pages/my/my' }) });
   },
 
   selectPlan(e) {
@@ -62,23 +79,27 @@ Page({
 
   async subscribe() {
     const { selectedPlan, userInfo } = this.data;
-    
-    // 检查是否已登录
     if (!checkLogin()) {
-      wx.showToast({ title: '请先登录', icon: 'none' });
+      wx.showToast({ title: this.data.lang === 'en' ? 'Please sign in' : '请先登录', icon: 'none' });
       return;
     }
-
-    wx.showLoading({ title: '正在创建订单...' });
+    wx.showLoading({ title: this.data.lang === 'en' ? 'Creating order…' : '创建订单…', mask: true });
 
     try {
-      // 调用云函数创建订单
       const res = await callFunction('ai', { action: 'createOrder', plan: selectedPlan });
-      
       wx.hideLoading();
-      
-      if (res.paySign) {
-        // 小程序支付
+
+      const activate = () => {
+        const expireTime = selectedPlan === 'month'
+          ? Date.now() + 30 * 24 * 60 * 60 * 1000
+          : Date.now() + 365 * 24 * 60 * 60 * 1000;
+        const newUserInfo = { ...userInfo, vipLevel: selectedPlan, vipExpireTime: expireTime };
+        wx.setStorageSync('userInfo', newUserInfo);
+        this.setData({ userInfo: newUserInfo, vipLevel: selectedPlan });
+        this.loadUserInfo();
+      };
+
+      if (res && res.paySign) {
         wx.requestPayment({
           timeStamp: res.timeStamp,
           nonceStr: res.nonceStr,
@@ -86,43 +107,38 @@ Page({
           signType: res.signType,
           paySign: res.paySign,
           success: () => {
-            wx.showToast({ title: '支付成功', icon: 'success' });
-            // 更新用户VIP状态
-            const expireTime = selectedPlan === 'month' 
-              ? Date.now() + 30 * 24 * 60 * 60 * 1000 
-              : Date.now() + 365 * 24 * 60 * 60 * 1000;
-            const newUserInfo = { ...userInfo, vipLevel: selectedPlan, vipExpireTime: expireTime };
-            wx.setStorageSync('userInfo', newUserInfo);
-            this.setData({ userInfo: newUserInfo, vipLevel: selectedPlan });
-            this.loadUserInfo();
+            wx.showToast({ title: this.data.lang === 'en' ? 'Success' : '支付成功', icon: 'success' });
+            activate();
           },
           fail: (err) => {
-            if (err.errMsg === 'requestPayment:fail cancel') {
-              wx.showToast({ title: '支付取消', icon: 'none' });
-            } else {
-              wx.showToast({ title: '支付失败', icon: 'none' });
-            }
-          }
+            const cancelled = err && err.errMsg === 'requestPayment:fail cancel';
+            wx.showToast({
+              title: this.data.lang === 'en'
+                ? (cancelled ? 'Cancelled' : 'Payment failed')
+                : (cancelled ? '支付取消' : '支付失败'),
+              icon: 'none',
+            });
+          },
         });
       } else {
-        // 演示模式（没有配置支付）
-        wx.showToast({ title: '演示模式：支付功能待配置', icon: 'none' });
-        // 模拟开通会员
-        const expireTime = selectedPlan === 'month' 
-          ? Date.now() + 30 * 24 * 60 * 60 * 1000 
-          : Date.now() + 365 * 24 * 60 * 60 * 1000;
-        const newUserInfo = { ...userInfo, vipLevel: selectedPlan, vipExpireTime: expireTime };
-        wx.setStorageSync('userInfo', newUserInfo);
-        this.setData({ userInfo: newUserInfo, vipLevel: selectedPlan });
-        this.loadUserInfo();
+        wx.showToast({
+          title: this.data.lang === 'en' ? 'Payment config error' : '支付配置异常，请联系客服',
+          icon: 'none',
+        });
       }
     } catch (e) {
       wx.hideLoading();
-      wx.showToast({ title: '支付服务暂不可用', icon: 'none' });
+      wx.showToast({
+        title: this.data.lang === 'en' ? 'Service unavailable' : '支付暂不可用',
+        icon: 'none',
+      });
     }
   },
 
   onShareAppMessage() {
-    return { title: '照片工坊 - 开通会员', path: '/subpackages/member/pages/member/member' };
+    const title = this.data.lang === 'en'
+      ? 'Miaosec Atelier — subscribe'
+      : '微秒工作室 · 订阅会员';
+    return { title, path: '/subpackages/member/pages/member/member' };
   },
 });

@@ -7,9 +7,28 @@ const _ = db.command;
 
 const FREE_DAILY_LIMIT = parseInt(process.env.FREE_DAILY_LIMIT || '5', 10);
 
+// 集合不存在时自动建表后重试（CloudBase 的 .add() 不会自动建集合）
+async function safeAdd(collectionName, data) {
+  try {
+    return await db.collection(collectionName).add({ data });
+  } catch (e) {
+    if (e && e.errCode === -502005) {
+      try { await db.createCollection(collectionName); } catch (_) { /* 可能已存在 */ }
+      return await db.collection(collectionName).add({ data });
+    }
+    throw e;
+  }
+}
+
 async function getUser(openid) {
-  const res = await db.collection('users').where({ openid }).limit(1).get();
-  return res.data[0] || null;
+  try {
+    const res = await db.collection('users').where({ openid }).limit(1).get();
+    return res.data[0] || null;
+  } catch (e) {
+    // 集合尚未创建：返回 null，由调用方按"新用户"逻辑处理
+    if (e && e.errCode === -502005) return null;
+    throw e;
+  }
 }
 
 function getTodayKey() {
@@ -26,8 +45,13 @@ function getVipExpireTime(user) {
 }
 
 async function getUsageRecord(openid, date) {
-  const res = await db.collection('ai_usage').where({ openid, date }).limit(1).get();
-  return res.data[0] || null;
+  try {
+    const res = await db.collection('ai_usage').where({ openid, date }).limit(1).get();
+    return res.data[0] || null;
+  } catch (e) {
+    if (e && e.errCode === -502005) return null; // 集合未建
+    throw e;
+  }
 }
 
 async function checkUsageLimit(openid) {
@@ -79,12 +103,10 @@ async function incrementUsage(openid) {
     return true;
   }
 
-  await db.collection('ai_usage').add({
-    data: {
-      openid,
-      date: today,
-      count: 1,
-    },
+  await safeAdd('ai_usage', {
+    openid,
+    date: today,
+    count: 1,
   });
   return true;
 }
@@ -142,8 +164,7 @@ async function renewMembership(openid, plan) {
       },
     });
   } else {
-    await db.collection('users').add({
-      data: {
+    await safeAdd('users', {
         openid,
         nickName: '',
         avatarUrl: '',
@@ -154,7 +175,6 @@ async function renewMembership(openid, plan) {
         createTime: now,
         lastLoginTime: now,
         updateTime: now,
-      },
     });
   }
 

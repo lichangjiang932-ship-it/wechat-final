@@ -40,7 +40,7 @@
     "swc": false,
     "disableSWC": true
   },
-  "appid": "wx0d38e5fc47689cdc",
+  "appid": "wxd0d5d468d257099e",
   "projectname": "art-ai",
   "description": "美术AI小程序 - AI驱动的美术作品分析与创作工具",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",

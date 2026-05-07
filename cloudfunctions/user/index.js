@@ -5,7 +5,20 @@ const jwt = require('jsonwebtoken');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 
-const JWT_SECRET = process.env.JWT_SECRET;
+// 集合不存在时自动建表后重试
+async function safeAdd(collectionName, data) {
+  try {
+    return await db.collection(collectionName).add({ data });
+  } catch (e) {
+    if (e && e.errCode === -502005) {
+      try { await db.createCollection(collectionName); } catch (_) { /* 可能已存在 */ }
+      return await db.collection(collectionName).add({ data });
+    }
+    throw e;
+  }
+}
+
+const JWT_SECRET = process.env.JWT_SECRET || '';
 if (!JWT_SECRET) {
   console.error('[user] 致命错误: JWT_SECRET 环境变量未配置，服务拒绝启动');
   throw new Error('JWT_SECRET is not configured');
@@ -25,8 +38,13 @@ function getRandomEmoji() {
 }
 
 async function findUser(openid) {
-  const res = await db.collection('users').where({ openid }).get();
-  return res.data[0] || null;
+  try {
+    const res = await db.collection('users').where({ openid }).get();
+    return res.data[0] || null;
+  } catch (e) {
+    if (e && e.errCode === -502005) return null; // 集合未建：当作新用户处理
+    throw e;
+  }
 }
 
 async function createUser(openid, extraFields = {}) {
@@ -43,7 +61,7 @@ async function createUser(openid, extraFields = {}) {
     lastLoginTime: now,
     ...extraFields,
   };
-  const addRes = await db.collection('users').add({ data: user });
+  const addRes = await safeAdd('users', user);
   user._id = addRes._id;
   return user;
 }
