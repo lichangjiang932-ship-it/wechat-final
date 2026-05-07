@@ -124,5 +124,8 @@
     "scope.camera": {
       "desc": "用于让你拍摄照片作为创作素材或海报照片"
     }
-  }
+  },
+  "requiredPrivateInfos": [
+    "chooseMedia"
+  ]
 }

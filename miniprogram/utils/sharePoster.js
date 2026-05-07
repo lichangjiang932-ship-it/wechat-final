@@ -53,7 +53,7 @@ async function generateSharePoster(options) {
   // 画布尺寸
   const canvasWidth = 375;
   const canvasHeight = 600;
-  const dpr = wx.getSystemInfoSync().pixelRatio || 2;
+  const dpr = (wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()).pixelRatio || 2;
 
   const canvas = wx.createOffscreenCanvas({
     type: '2d',

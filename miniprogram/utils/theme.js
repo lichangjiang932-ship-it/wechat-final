@@ -24,7 +24,7 @@ function initTheme() {
   
   if (savedMode === ThemeMode.SYSTEM) {
     // 跟随系统
-    const systemInfo = wx.getSystemInfoSync();
+    const systemInfo = (wx.getAppBaseInfo ? Object.assign({}, wx.getWindowInfo&&wx.getWindowInfo(), wx.getAppBaseInfo()) : wx.getSystemInfoSync());
     currentTheme = systemInfo.theme || ThemeMode.LIGHT;
     
     // 监听系统主题变化
@@ -47,7 +47,7 @@ function setTheme(mode) {
   wx.setStorageSync(STORAGE_KEY, mode);
   
   if (mode === ThemeMode.SYSTEM) {
-    const systemInfo = wx.getSystemInfoSync();
+    const systemInfo = (wx.getAppBaseInfo ? Object.assign({}, wx.getWindowInfo&&wx.getWindowInfo(), wx.getAppBaseInfo()) : wx.getSystemInfoSync());
     currentTheme = systemInfo.theme || ThemeMode.LIGHT;
   } else {
     currentTheme = mode;

@@ -1,182 +1,127 @@
-# 照片工坊 - AI写真微信小程序
+# 妙摄 Miaosec — AI 图像创作小程序
 
-一款温暖质感的 AI 照片处理小程序，支持 AI 写真、证件照、风格迁移等功能。
+一款编辑刊风格的 AI 图像创作小程序，支持 AI 写真、风格迁移、童趣海报等功能。
 
-## ✨ 功能特性
+## 功能特性
 
-### 🎯 核心功能
-- **AI 写真** - 一键生成个人写真照片
-- **证件照制作** - 自动换背景，生成标准证件照
-- **风格迁移** - 支持多种艺术风格（油画、水彩、国风、赛博朋克等）
-- **老照片修复** - 修复老旧照片，还原清晰画质
-- **文生图** - 通过文字描述生成图片
-- **图生图** - 上传参考图，生成同款风格
+### 核心功能
+- **AI 创作** — 文生图 / 图生图，多风格预设
+- **童趣海报** — 4 步生成儿童才艺主题海报（Canvas 程序化绘制）
+- **作品收藏** — 个人作品库 + 公共画廊
+- **会员订阅** — 微信支付集成
 
-### 📱 页面结构
-| 页面 | 路径 | 说明 |
+### 页面结构
+
+主包：
+
+| 页面 | 路径 |
+|------|------|
+| 首页 | `/pages/index/index` |
+| 发现 | `/pages/discover/discover` |
+| 创作 | `/pages/create/create` |
+| 收藏 | `/pages/favorites/favorites` |
+| 我的 | `/pages/my/my` |
+| 喜欢 | `/pages/likes/likes` |
+| 上传 | `/pages/upload/upload` |
+
+分包：
+
+| 分包 | 路径 |
+|------|------|
+| 详情预览 | `/subpackages/preview/pages/preview/preview` |
+| 设置 | `/subpackages/settings/pages/settings/settings` |
+| 历史 | `/subpackages/history/pages/history/history` |
+| 会员 | `/subpackages/member/pages/member/member` |
+| 海报 | `/subpackages/poster/pages/poster/poster` |
+| 隐私政策 | `/subpackages/policy/pages/privacy/privacy` |
+| 用户协议 | `/subpackages/policy/pages/terms/terms` |
+
+## 设计系统
+
+参见 [DESIGN.md](./DESIGN.md)。
+
+- 字体：PingFang SC / Cabinet Grotesk / Kaiti SC（不用 Inter / Roboto）
+- 配色：ink/cream/ember 编辑刊三色 token
+- 不使用 emoji 作为 UI 装饰，统一用 SVG mask icons
+
+## 技术栈
+
+- **前端**：微信小程序原生
+- **后端**：微信云开发（云函数 + 云数据库 + 云存储）
+- **AI**：即梦 API（火山引擎，图像生成）+ DeepSeek（提示词优化、文案）
+- **支付**：微信小程序支付
+
+## 项目结构
+
+```
+miaosec/
+├── miniprogram/
+│   ├── app.{js,json,wxss}
+│   ├── components/         # 通用组件（含 privacy-popup）
+│   ├── custom-tab-bar/     # 自定义底部 tab
+│   ├── config/             # 数据 / 常量
+│   ├── utils/              # cloud / i18n / theme / poster ...
+│   ├── pages/              # 主包页面
+│   ├── subpackages/        # 分包（preview/settings/history/member/poster/policy）
+│   ├── images/             # 静态图标 + tab 图标
+│   ├── privacyDescription.json   # 微信审核必备
+│   └── styles/
+├── cloudfunctions/
+│   ├── ai/                 # AI 生成 + 内容安全 + 创建订单
+│   ├── pay-notify/         # 微信支付回调
+│   ├── tools/              # 工具列表
+│   └── user/               # 用户登录
+├── project.config.json
+└── project.private.config.json   # 已 gitignore
+```
+
+## 上线前检查清单
+
+### 一、云开发控制台
+
+1. 开通云开发，记录环境 ID（默认 `cloud1-d8glhp7pdcd3fffba`，按需改 `app.js`）
+2. **数据库**创建 7 个集合：`users` / `ai_usage` / `my_works` / `my_favorites` / `my_uploads` / `orders` / `tools`，配读写权限
+3. **云函数**逐个右键「上传并部署：云端安装依赖」（`ai` / `pay-notify` / `tools` / `user`）
+4. **环境变量**（云开发控制台 → 云函数 → 环境变量）：
+
+| 函数 | 变量 | 说明 |
 |------|------|------|
-| 首页 | `/pages/index/index` | Banner、金刚区、热门模板、灵感画廊 |
-| 创作页 | `/pages/create/create` | AI 创作核心功能页 |
-| 发现页 | `/pages/discover/discover` | 作品瀑布流展示 |
-| 详情页 | `/pages/preview/preview` | 图片详情、预览、做同款 |
-| 我的 | `/pages/my/my` | 个人中心、会员、设置 |
-| 设置 | `/pages/settings/settings` | 账号设置、通用设置 |
-| 作品 | `/pages/history/history` | 我的作品列表 |
-| 收藏 | `/pages/favorites/favorites` | 我的收藏列表 |
+| `ai` | `JIMENG_AK` `JIMENG_SK` `JIMENG_MODEL` | 火山引擎即梦 |
+| `ai` | `DEEPSEEK_API_KEY` `DEEPSEEK_MODEL` | DeepSeek |
+| `ai` | `WECHAT_APPID` `WECHAT_MCH_ID` `WECHAT_PAY_KEY` | 微信支付 |
+| `ai` | `IS_TEST_MODE` `FREE_DAILY_LIMIT` | 业务开关 |
+| `pay-notify` | `WECHAT_APPID` `WECHAT_MCH_ID` `WECHAT_PAY_KEY` | 同上 |
+| `user` | `JWT_SECRET` | 自生成 32 位随机串 |
 
-## 🎨 设计系统
+### 二、小程序公众平台
 
-项目包含 `DESIGN.md` 设计系统文档，定义了：
+1. **服务器域名 → request 合法域名**：`https://api.deepseek.com` `https://visual.volcengineapi.com`（云函数走不需配，前端直连才需）
+2. **隐私接口管理**：申请 `chooseMedia` `getUserInfo` 等隐私接口，每条写用途
+3. **类目设置**：选对应类目（工具/教育/摄影等）
+4. **基本信息**：补齐备案号、客服联系方式
 
-- **配色系统**：焦糖色主色调、暖棕黑文字、纸白背景
-- **排版规范**：字体层级、行高、字重
-- **组件样式**：按钮、卡片、输入框、导航栏
-- **布局原则**：间距、圆角、阴影
-- **动画规范**：过渡时间、缓动函数
+### 三、合规
 
-详见 [DESIGN.md](./DESIGN.md)
+- 已接入：`__usePrivacyCheck__` + `privacyDescription.json` + `permission` + `requiredPrivateInfos` + `onNeedPrivacyAuthorization` 弹窗 + 隐私政策页 + 用户协议页 + AI 内容安全审核（msgSecCheck v2）
+- 还需替换：`privacyDescription.json` / `subpackages/policy/*.wxml` 中的 `support@miaosec.example.com` → 你的真实联系方式（或改为「设置 → 联系客服」）
 
-## 🛠 技术栈
+## 更新日志
 
-- **前端**: 微信小程序原生开发
-- **后端**: 微信云开发（云函数 + 云数据库 + 云存储）
-- **AI**: 即梦 API（文生图、图生图）
-- **UI**: 自定义组件 + CSS 变量主题系统
-
-## 📦 项目结构
-
-```
-wechat-miniprogram/
-├── miniprogram/                 # 小程序前端
-│   ├── app.js                   # 入口文件
-│   ├── app.json                 # 页面配置
-│   ├── app.wxss                 # 全局样式（CSS变量主题）
-│   ├── config/
-│   │   └── images.js            # 图片资源统一管理
-│   ├── utils/
-│   │   ├── cloud.js             # 云开发工具封装
-│   │   ├── textMeasure.js       # Pretext 文本测量
-│   │   └── textLayout.js        # 文本布局工具
-│   ├── pages/
-│   │   ├── index/               # 首页
-│   │   ├── create/              # AI 创作页
-│   │   ├── discover/            # 发现页
-│   │   ├── preview/            # 图片详情页
-│   │   ├── my/                 # 我的页面
-│   │   └── member/              # 会员中心
-│   └── images/
-│       ├── icons/               # 功能图标
-│       ├── covers/              # 本地封面图
-│       └── tab-*.png            # TabBar 图标
-├── cloudfunctions/              # 云函数
-│   ├── ai/                      # AI 处理（即梦 API）
-│   ├── user/                    # 用户登录
-│   └── tools/                   # 工具函数
-└── project.config.json          # 项目配置
-```
-
-## 🤖 AI 配置（即梦 API）
-
-### 1. 获取 API 密钥
-
-1. 访问 [火山引擎](https:// volcengine.com/) 注册账号
-2. 开通「即梦」服务
-3. 获取 Access Key 和 Secret Key
-
-### 2. 配置云函数环境变量
-
-在微信开发者工具中：
-
-1. 右键点击 `cloudfunctions/ai` 文件夹
-2. 选择「上传并部署：云端安装依赖」
-3. 在云开发控制台 → 云函数 → `ai` → 环境变量，添加：
-
-| 变量名 | 值 | 说明 |
-|--------|-----|------|
-| `JIMENG_AK` | 您的 AccessKey | 必填 |
-| `JIMENG_SK` | 您的 SecretKey | 必填 |
-| `JIMENG_MODEL` | `jimeng-v4` | 默认值 |
-| `FREE_DAILY_LIMIT` | `5` | 免费次数/天 |
-
-### 3. 测试 AI 功能
-
-配置完成后，在创作页输入描述词，点击生成测试。
-
-## 🚀 部署步骤
-
-### 1. 开通云开发
-
-1. 打开微信开发者工具
-2. 导入项目，填入你的 AppID
-3. 点击「云开发」开通环境
-4. 记下你的 **云环境ID**
-
-### 2. 配置项目
-
-修改 `miniprogram/app.js` 中的 `CLOUD_ENV` 为你的云环境ID
-
-### 3. 创建数据库集合
-
-在云开发控制台 → 数据库中创建：
-
-| 集合名 | 权限 | 说明 |
-|--------|------|------|
-| `users` | 仅创建者可读写 | 用户信息 |
-| `ai_usage` | 仅创建者可读写 | AI 使用记录 |
-
-### 4. 上传云函数
-
-右键点击 `cloudfunctions` 目录下的每个云函数，选择「上传并部署：云端安装依赖」
-
-### 5. 配置 AI
-
-按照上面的「AI 配置」步骤配置即梦 API
-
-### 6. 预览和发布
-
-1. 点击「预览」扫码测试
-2. 测试通过后点击「上传」
-3. 提交审核，审核通过后发布
-
-## 🎨 设计规范
-
-### 配色系统
-```css
---primary: #C9956B;        /* 焦糖色 */
---primary-dark: #B07D55;   /* 深焦糖 */
---text-primary: #3A3530;   /* 暖棕黑 */
---bg-page: #F8F6F3;        /* 暖纸白 */
---bg-card: #FFFFFF;         /* 卡片白 */
---text-secondary: #7A7268;  /* 暖灰棕 */
---text-hint: #9A9288;       /* 浅灰 */
---border-color: #F0EDE8;    /* 边框色 */
-```
-
-### 间距规范
-- 一级留白: 32rpx
-- 二级留白: 24rpx
-- 三级留白: 16rpx
-
-### 圆角规范
-- XL: 24rpx
-- LG: 16rpx
-- MD: 12rpx
-- SM: 8rpx
-
-## 📝 更新日志
+### v1.2.0 (2026-05-07)
+- 新增「我的海报」童趣 SHOWCASE 功能
+- 上线合规一揽子修复（隐私 / 内容安全 / 权限三件套）
+- 移除全部 emoji，统一 SVG mask icons
+- 清理死代码 ~180KB，整理 logger 规范
 
 ### v1.1.0 (2026-04-04)
-- ✅ 添加图片详情页（预览、做同款）
-- ✅ 集成即梦 API（文生图、图生图）
-- ✅ 优化登录流程（button + input 方式）
-- ✅ 优化首页和发现页图片预览
+- 添加图片详情页
+- 集成即梦 API（文生图 / 图生图）
+- 优化登录与图片预览
 
 ### v1.0.0 (2026-04-04)
-- ✅ 完成暖色调 UI 改版
-- ✅ 优化首页布局和视觉层次
-- ✅ 完善用户信息同步机制
-- ✅ 修复已知 bug
+- 暖色调 UI 改版
+- 用户信息同步
 
-## 📄 许可证
+## 许可证
 
 MIT License

@@ -14,7 +14,7 @@ async function generatePoster(options) {
 
   return new Promise((resolve, reject) => {
     // 获取系统信息
-    const systemInfo = wx.getSystemInfoSync();
+    const systemInfo = (wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync());
     const dpr = systemInfo.pixelRatio || 2;
     
     // 海报尺寸
@@ -151,7 +151,7 @@ async function generatePosterWithCanvas(options) {
 
         const canvas = res[0].node;
         const ctx = canvas.getContext('2d');
-        const dpr = wx.getSystemInfoSync().pixelRatio || 2;
+        const dpr = (wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()).pixelRatio || 2;
         
         canvas.width = 375 * dpr;
         canvas.height = 600 * dpr;
