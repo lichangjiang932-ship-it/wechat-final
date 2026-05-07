@@ -50,3 +50,7 @@ coverage/
 .env
 .env.local
 .env.*.local
+
+# 小程序前端依赖
+miniprogram/node_modules/
+miniprogram/package-lock.json
