@@ -50,7 +50,8 @@
         <text class="card-hint">显示在海报中央"学员姓名："字段后</text>
         <input class="field" type="text" placeholder="例如：小九"
                placeholder-class="field-ph"
-               value="{{name}}" bindinput="onNameInput" maxlength="12" focus="{{step===0}}"/>
+               value="{{name}}" bindinput="onNameInput" maxlength="12" focus="{{step===0}}"
+               cursor-spacing="120" adjust-position="{{true}}"/>
         <text class="char-count">{{name.length}} / 12</text>
       </view>
     </block>
@@ -70,7 +71,8 @@
         </view>
         <input class="field" type="number" placeholder="或自定义输入"
                placeholder-class="field-ph"
-               value="{{age}}" bindinput="onAgeInput" maxlength="3"/>
+               value="{{age}}" bindinput="onAgeInput" maxlength="3"
+               cursor-spacing="120" adjust-position="{{true}}"/>
       </view>
     </block>
 
@@ -82,7 +84,8 @@
         <text class="card-hint">输入一个爱好关键词（如：画画 / 钢琴 / 足球），点击 DeepSeek 润色为一句文案</text>
         <input class="field" type="text" placeholder="例如：画画"
                placeholder-class="field-ph"
-               value="{{hobby}}" bindinput="onHobbyInput" maxlength="20" focus="{{step===2}}"/>
+               value="{{hobby}}" bindinput="onHobbyInput" maxlength="20" focus="{{step===2}}"
+               cursor-spacing="120" adjust-position="{{true}}"/>
         <view class="hobby-chips">
           <view wx:for="{{['画画','钢琴','舞蹈','足球','读书','积木','街舞','小提琴','玩车']}}" wx:key="*this"
                 class="hobby-chip {{hobby === item ? 'active' : ''}}"
@@ -100,7 +103,8 @@
           <textarea class="textarea" placeholder="试试调整几个字"
                     placeholder-class="field-ph"
                     value="{{caption}}" bindinput="onCaptionEdit"
-                    maxlength="40" auto-height/>
+                    maxlength="40" auto-height
+                    cursor-spacing="120" adjust-position="{{true}}"/>
           <text class="char-count">{{caption.length}} / 40</text>
         </view>
       </view>

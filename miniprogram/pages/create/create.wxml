@@ -75,7 +75,8 @@
       <textarea class="prompt-input"
         placeholder="{{activeMode === 'img2img' ? '描述你想要的风格或效果，例如：换成动漫画风、加上樱花背景' : i18n['create.placeholder']}}"
         placeholder-class="prompt-ph" value="{{prompt}}" bindinput="onPromptInput"
-        maxlength="500" auto-height />
+        maxlength="500" auto-height
+        cursor-spacing="140" adjust-position="{{true}}" />
       <view class="prompt-footer">
         <text class="char-count">{{prompt.length}} / 500</text>
         <text class="enhance tap">{{i18n['create.enhance']}}</text>

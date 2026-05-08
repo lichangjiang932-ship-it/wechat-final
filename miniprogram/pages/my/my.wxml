@@ -156,7 +156,8 @@
         <text class="label login-field-label">{{i18n['login.name']}}</text>
         <view class="login-input-box">
           <input class="login-input" type="nickname" placeholder="{{i18n['login.name.placeholder']}}" placeholder-class="login-ph"
-            value="{{tempNickName}}" bindinput="onNickNameInput" bindblur="onNickNameConfirm"/>
+            value="{{tempNickName}}" bindinput="onNickNameInput" bindblur="onNickNameConfirm"
+            cursor-spacing="160" adjust-position="{{true}}"/>
         </view>
       </view>
     </view>

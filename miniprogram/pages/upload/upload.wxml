@@ -251,12 +251,14 @@
     <view class="form-row">
       <text class="form-label">名称</text>
       <input class="form-input" value="{{editingName}}" bindinput="onEditNameInput"
-             maxlength="40" placeholder="给这张图片起个名字" placeholder-class="form-ph" />
+             maxlength="40" placeholder="给这张图片起个名字" placeholder-class="form-ph"
+             cursor-spacing="140" adjust-position="{{true}}" />
     </view>
     <view class="form-row">
       <text class="form-label">标签</text>
       <input class="form-input" value="{{editingTags}}" bindinput="onEditTagsInput"
-             maxlength="60" placeholder="多个标签用逗号分隔，如：人像,风景" placeholder-class="form-ph" />
+             maxlength="60" placeholder="多个标签用逗号分隔，如：人像,风景" placeholder-class="form-ph"
+             cursor-spacing="140" adjust-position="{{true}}" />
       <text class="form-hint">最多 8 个，按逗号 / 顿号 / 空格分隔</text>
     </view>
 
