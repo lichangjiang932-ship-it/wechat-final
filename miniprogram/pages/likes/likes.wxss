@@ -1,0 +1,134 @@
+/* Likes · Liked works dark */
+.page { background: var(--ink-0); min-height: 100vh; }
+
+/* Nav */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--ink-0); border-bottom: 1rpx solid var(--line); }
+.nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 0 24rpx; min-height: 44px; }
+.nav-back { padding: 12rpx; margin-left: -12rpx; }
+.nav-title { font-size: 20rpx; letter-spacing: 0.18em; color: var(--cream-3); font-family: var(--f-mono); }
+.nav-placeholder { width: 60rpx; }
+
+/* Scroll */
+.scroll { height: 100vh; box-sizing: border-box; }
+
+/* Editorial header — gives breathing room below the nav so first works don't crowd */
+.head { padding: 32rpx 28rpx 16rpx; line-height: 0.98; }
+.d-big { display: block; font-size: 56rpx; color: var(--cream-0); }
+
+/* Loading */
+.loading-state { display: flex; justify-content: center; padding: 120rpx 0; }
+.spinner { width: 48rpx; height: 48rpx; border: 4rpx solid var(--line); border-top-color: var(--ember); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Empty state */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 200rpx 48rpx 0; }
+.empty-icon { margin-bottom: 24rpx; opacity: 0.4; }
+.empty-title { font-family: var(--f-display); font-size: 32rpx; color: var(--cream-2); margin-bottom: 12rpx; }
+.empty-desc { font-family: var(--f-mono); font-size: 20rpx; color: var(--cream-4); letter-spacing: 0.1em; margin-bottom: 40rpx; }
+.empty-btn { padding: 16rpx 40rpx; }
+
+/* Bento gallery — 4 cols × N rows of 200rpx, asymmetric mosaic */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 200rpx;
+  gap: 14rpx;
+  padding: 4rpx 24rpx 0;
+}
+.bento-cell {
+  position: relative;
+  border-radius: 28rpx;
+  overflow: hidden;
+  background: var(--ink-2);
+  border: 1rpx solid var(--line);
+  transition: transform 0.18s ease;
+}
+.bento-cell:active { transform: scale(0.985); }
+.bento-img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.bento-shade {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(15,15,15,0) 42%, rgba(15,15,15,0.82) 100%);
+  pointer-events: none;
+}
+.bento-tag {
+  position: absolute;
+  top: 14rpx; left: 16rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  background: rgba(253,251,245,0.12);
+  backdrop-filter: blur(10rpx);
+  font-size: 16rpx;
+  color: var(--cream-0);
+  font-family: var(--f-mono);
+  letter-spacing: 0.16em;
+}
+.bento-fav {
+  position: absolute;
+  top: 12rpx; right: 12rpx;
+  width: 44rpx; height: 44rpx;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.5);
+  border-radius: 50%;
+  backdrop-filter: blur(8rpx);
+  z-index: 3;
+}
+.bento-body {
+  position: absolute;
+  left: 20rpx; right: 20rpx; bottom: 18rpx;
+  display: flex; flex-direction: column; gap: 4rpx;
+  z-index: 2;
+}
+.bento-name {
+  font-size: 28rpx;
+  color: var(--cream-0);
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.safe-bottom { height: 120rpx; }
+
+/* Reuse btn-ember */
+.btn-ember { border-radius: 9999rpx; background: linear-gradient(145deg, #EE7A50 0%, #D45830 100%); display: flex; align-items: center; justify-content: center; color: #FFF8F0; font-size: 28rpx; letter-spacing: 0.05em; box-shadow: 0 12rpx 32rpx -8rpx rgba(232,106,60,0.45); }
+.btn-ember:active { opacity: 0.92; transform: scale(0.98); }
+
+/* Reuse ic */
+.ic { background: currentColor; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain; }
+.ic-arrow-left { -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>"); }
+.ic-heart { -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/></svg>"); }
+.ic-heart.active { -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/></svg>"); }
+.ic-share { -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='18' cy='5' r='3'/><circle cx='6' cy='12' r='3'/><circle cx='18' cy='19' r='3'/><line x1='8.59' y1='13.51' x2='15.42' y2='17.49'/><line x1='15.41' y1='6.51' x2='8.59' y2='10.49'/></svg>"); }
+
+
+/* AI 生成显著标识（合规要求：深度合成-AI绘画类目） */
+.ai-banner-inline {
+  display: flex; align-items: center; gap: 12rpx;
+  margin: 24rpx 28rpx 16rpx;
+  padding: 14rpx 18rpx;
+  background: rgba(232, 106, 60, 0.10);
+  border: 1rpx solid rgba(232, 106, 60, 0.28);
+  border-radius: 16rpx;
+}
+.ai-banner-badge {
+  font-family: var(--f-mono);
+  font-size: 18rpx; font-weight: 700;
+  color: #fff; background: var(--ember);
+  padding: 4rpx 10rpx; border-radius: 6rpx;
+  letter-spacing: 0.06em;
+}
+.ai-banner-t { font-size: 22rpx; color: var(--cream-1); flex: 1; }
+.ai-corner {
+  position: absolute;
+  top: 12rpx; right: 12rpx;
+  z-index: 3;
+  font-family: var(--f-mono);
+  font-size: 18rpx; font-weight: 700;
+  color: #fff; background: rgba(0, 0, 0, 0.55);
+  padding: 4rpx 10rpx; border-radius: 6rpx;
+  letter-spacing: 0.06em;
+}
+.bento-cell { position: relative; }
+

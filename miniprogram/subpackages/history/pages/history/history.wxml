@@ -1,0 +1,78 @@
+<!-- 我的作品 · Dark editorial -->
+<view class="page {{themeClass}}">
+
+  <!-- Nav bar -->
+  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner" style="min-height: 44px;">
+      <view class="nav-back tap" bindtap="goBack">
+        <view class="ic ic-back nav-back-icon"/>
+      </view>
+      <text class="label nav-title">MY WORKS · 作品</text>
+      <view class="nav-count">
+        <text wx:if="{{works.length > 0}}">{{works.length}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Content -->
+  <scroll-view
+    scroll-y
+    class="scroll"
+    style="padding-top: calc({{navBarHeight}}px + {{statusBarHeight}}px);"
+    refresher-enabled
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh">
+
+    <!-- Header headline — gives breathing space below the nav -->
+    <view class="head">
+      <text class="display d-big">你的</text>
+      <text class="display display-italic d-big">作品集</text>
+    </view>
+
+    <!-- AI 生成内容显著标识（合规要求） -->
+    <view class="ai-banner-inline" wx:if="{{works.length > 0}}">
+      <text class="ai-banner-badge">AI</text>
+      <text class="ai-banner-t">以下作品均由人工智能生成，仅供参考，不代表真实事件或人物</text>
+    </view>
+
+    <!-- Loading -->
+    <view class="loading-row" wx:if="{{loading && works.length === 0}}">
+      <view class="spinner"/>
+    </view>
+
+    <!-- Empty -->
+    <view class="empty" wx:elif="{{empty}}">
+      <view class="ic ic-grid" style="background: var(--cream-4); width: 72rpx; height: 72rpx;"/>
+      <text class="display empty-title">还没有作品</text>
+      <text class="label empty-sub">去创作页创作或上传图片，作品会显示在这里</text>
+      <view class="btn-ember empty-btn tap" bindtap="goCreate">
+        <text>开始创作 →</text>
+      </view>
+    </view>
+
+    <!-- Story list（同首页「他们的镜头 / 今日心事」布局） -->
+    <view class="story-list" wx:else>
+      <view class="story-row tap" wx:for="{{works}}" wx:key="id"
+            bindtap="onPreview" data-index="{{item._index}}">
+        <text class="display display-italic story-num">{{item.seq}}</text>
+        <view class="story-body">
+          <text class="display story-t">{{item.title || item.style || '作品'}}</text>
+          <text class="label story-meta">{{item.style || 'AI WORK'}}<text wx:if="{{item.time}}"> · {{item.time}}</text></text>
+          <view class="story-actions">
+            <text class="story-act tap" catchtap="onMakeSame" data-item="{{item}}">同款</text>
+            <text class="story-act tap" catchtap="onSave" data-item="{{item}}">保存</text>
+            <text class="story-act danger tap" catchtap="onDelete" data-item="{{item}}">删除</text>
+          </view>
+        </view>
+        <view class="story-thumb-wrap">
+          <image class="story-thumb" src="{{item.url}}" mode="aspectFill" lazy-load
+                 binderror="onImgError" data-id="{{item.id}}"/>
+          <view class="ai-corner ai-corner-thumb">AI</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="list-bottom" wx:if="{{works.length > 0}}">~ 共 {{works.length}} 个作品 ~</view>
+    <view class="safe-bottom"/>
+  </scroll-view>
+</view>

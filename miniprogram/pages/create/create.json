@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "AI创作",
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "privacy-popup": "/components/privacy-popup/privacy-popup"
+  }
+}

@@ -1,0 +1,73 @@
+<!-- Favorites · Dark editorial -->
+<view class="page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
+
+  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner" style="min-height: 44px;">
+      <view wx:if="{{showBack}}" class="ic ic-back tap" style="background-color: var(--cream-2);" bindtap="goBack"/>
+      <view wx:else style="width: 44rpx;"/>
+      <text class="label-mono nav-title">LIBRARY</text>
+      <view style="width: 44rpx;"/>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="content" style="padding-top: calc({{navBarHeight}}px + {{statusBarHeight}}px);"
+               refresher-enabled refresher-triggered="{{refreshing}}"
+               bindrefresherrefresh="onRefresh">
+
+    <!-- Editorial header — gives breathing room below the nav -->
+    <view class="head" wx:if="{{favorites.length > 0}}">
+      <text class="display d-big">你的</text>
+      <text class="display display-italic d-big">图书馆</text>
+    </view>
+
+    <!-- AI 生成内容显著标识（合规要求） -->
+    <view class="ai-banner-inline" wx:if="{{favorites.length > 0}}">
+      <text class="ai-banner-badge">AI</text>
+      <text class="ai-banner-t">收藏的作品均由人工智能生成，仅供参考</text>
+    </view>
+
+    <!-- Empty state -->
+    <view class="empty" wx:if="{{!loading && favorites.length === 0}}">
+      <view class="ic ic-bookmark" style="background-color: var(--cream-4); width:80rpx;height:80rpx;"/>
+      <text class="display empty-title">图书馆还没有作品</text>
+      <text class="label-mono empty-sub">创作或收藏，都会出现在这里</text>
+      <view class="btn-ghost tap" style="margin-top: 24rpx; width: 240rpx;" bindtap="goDiscover">去发现 →</view>
+    </view>
+
+    <view class="waterfall" wx:if="{{favorites.length > 0}}">
+      <view class="water-col">
+        <view class="work-card tap" wx:for="{{leftCol}}" wx:key="id" bindtap="onPreview" data-item="{{item}}">
+          <view class="work-cover ratio-{{item.ratioClass}}">
+            <image wx:if="{{item.cover || item.url}}" class="work-img" src="{{item.cover || item.url}}" mode="aspectFill" lazy-load/>
+            <view wx:else class="work-img ph ph-fog"/>
+            <view class="ai-corner">AI</view>
+          </view>
+          <view class="work-body">
+            <text class="work-topic">{{item.topicText}}</text>
+            <text class="work-author">{{item.authorText}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="water-col">
+        <view class="work-card tap" wx:for="{{rightCol}}" wx:key="id" bindtap="onPreview" data-item="{{item}}">
+          <view class="work-cover ratio-{{item.ratioClass}}">
+            <image wx:if="{{item.cover || item.url}}" class="work-img" src="{{item.cover || item.url}}" mode="aspectFill" lazy-load/>
+            <view wx:else class="work-img ph ph-fog"/>
+            <view class="ai-corner">AI</view>
+          </view>
+          <view class="work-body">
+            <text class="work-topic">{{item.topicText}}</text>
+            <text class="work-author">{{item.authorText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="loading-row" wx:if="{{loading}}">
+      <view class="spinner"/>
+    </view>
+    <view class="dock-spacer"/>
+  </scroll-view>
+</view>
+
+<privacy-popup/>

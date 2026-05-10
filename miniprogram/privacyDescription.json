@@ -1,0 +1,24 @@
+{
+  "desc": "为了向你提供完整的 AI 创作、作品保存和会员服务，本小程序在使用过程中会调用以下系统能力。所有调用均与对应功能强相关，未经你授权我们不会预先收集任何信息。",
+  "owner": "妙摄 Miaosec",
+  "permissionList": [
+    {
+      "scope": "scope.writePhotosAlbum",
+      "name": "保存图片到相册",
+      "necessary": false,
+      "desc": "用于将你创作的 AI 作品、童趣海报或其他生成的图片保存到本地相册。仅在你点击「保存到相册」时调用。"
+    },
+    {
+      "scope": "scope.userInfo",
+      "name": "获取昵称头像",
+      "necessary": false,
+      "desc": "用于在「我的」页面展示你的个人形象，便于你识别并管理账号。仅在你主动登录时获取。"
+    },
+    {
+      "scope": "scope.camera",
+      "name": "调用相机",
+      "necessary": false,
+      "desc": "用于让你拍摄照片作为 AI 图生图素材、海报照片或个人头像。仅在你主动选择「拍摄」时调用。"
+    }
+  ]
+}

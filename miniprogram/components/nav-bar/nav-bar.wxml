@@ -1,0 +1,20 @@
+<!-- 自定义导航栏组件 -->
+<view class="nav-bar" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px; background: {{bgColor}};">
+  <view class="nav-inner" style="min-height: 44px;">
+    <!-- 左侧：返回按钮 -->
+    <view class="nav-left" wx:if="{{showBack}}" bindtap="onBack">
+      <text class="nav-back-icon" style="color: {{titleColor}};">‹</text>
+    </view>
+    
+    <!-- 中间：标题 -->
+    <view class="nav-center">
+      <text class="nav-title" style="color: {{titleColor}}; font-size: {{titleSize}}rpx;">{{title}}</text>
+      <text class="nav-subtitle" wx:if="{{subtitle}}" style="color: {{subtitleColor}};">{{subtitle}}</text>
+    </view>
+    
+    <!-- 右侧：插槽 -->
+    <view class="nav-right">
+      <slot></slot>
+    </view>
+  </view>
+</view>

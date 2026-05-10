@@ -1,0 +1,299 @@
+<!-- Create · Compose your frame -->
+<view class="page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
+
+  <scroll-view scroll-y class="scroll" style="padding-top: {{statusBarHeight}}px;">
+
+    <!-- Header -->
+    <view class="head">
+      <view class="head-row">
+        <view class="ic ic-back tap" bindtap="goBack"/>
+        <text class="label head-label">{{i18n['create.studio']}}</text>
+        <view class="ic ic-more tap"/>
+      </view>
+      <view class="head-title">
+        <text class="display d-big">{{i18n['create.title.1']}}</text>
+        <text class="display display-italic d-big">{{i18n['create.title.2']}}</text>
+      </view>
+    </view>
+
+    <!-- AI 生成内容显著标识（合规要求：深度合成-AI绘画类目） -->
+    <view class="ai-notice">
+      <view class="ai-notice-badge">AI</view>
+      <view class="ai-notice-body">
+        <text class="ai-notice-title">本页图片均为 AI 生成 · 人工智能生成</text>
+        <text class="ai-notice-sub">AI GENERATED · 内容由人工智能合成，仅供参考，不代表真实事件、人物或场景</text>
+      </view>
+    </view>
+
+    <!-- Mode switch -->
+    <view class="mode-bar">
+      <view class="mode-item {{activeMode === 'text2img' ? 'active' : ''}}" bindtap="switchMode" data-mode="text2img">
+        <text class="label mode-en">{{i18n['create.mode.prompt.en']}}</text>
+        <text class="display mode-n">{{i18n['create.mode.prompt']}}</text>
+      </view>
+      <view class="mode-item {{activeMode === 'img2img' ? 'active' : ''}}" bindtap="switchMode" data-mode="img2img">
+        <text class="label mode-en">{{i18n['create.mode.reference.en']}}</text>
+        <text class="display mode-n">{{i18n['create.mode.reference']}}</text>
+      </view>
+    </view>
+
+    <!-- Reference upload（图生图模式：先选/拍参考图） -->
+    <block wx:if="{{activeMode === 'img2img'}}">
+      <!-- 做同款风格参考（独立展示，不占用上传槽） -->
+      <view class="tpl-ref" wx:if="{{templateRef}}">
+        <image src="{{templateRef}}" mode="aspectFill" class="tpl-ref-thumb"/>
+        <view class="tpl-ref-body">
+          <text class="label tpl-ref-label">做同款 · STYLE REF</text>
+          <text class="display tpl-ref-name">{{templateRefTitle || templateName || '风格参考'}}</text>
+          <view class="tpl-ref-actions">
+            <text class="tpl-ref-use tap" catchtap="useTemplateAsSource">直接用此图 →</text>
+            <text class="tpl-ref-clear tap" catchtap="clearTemplateRef">移除</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="upload-area tap" bindtap="chooseImage">
+        <block wx:if="{{sourceImage}}">
+          <image src="{{sourceImage}}" mode="aspectFill" class="upload-img" />
+          <!-- 来源标签（来自「我的上传」时显示） -->
+          <view class="ref-badge" wx:if="{{refSource}}">
+            <view class="ic ic-ref" style="background-color: var(--ember); width: 20rpx; height: 20rpx;"/>
+            <text class="ref-badge-txt">{{refSource}}{{refMeta ? ' · ' + refMeta.width + '×' + refMeta.height : ''}}</text>
+          </view>
+          <view class="upload-overlay"><text>换一张 / 移除</text></view>
+        </block>
+        <block wx:else>
+          <view class="upload-circle"><view class="ic ic-create"/></view>
+          <text class="display upload-hint">{{templateRef ? '上传你的照片' : i18n['create.upload.hint']}}</text>
+          <text class="label upload-sub">{{templateRef ? '将套用上方风格' : i18n['create.upload.sub']}}</text>
+        </block>
+      </view>
+    </block>
+
+    <!-- Prompt（两种模式都需要：文生图描述画面；图生图描述风格/调整方向） -->
+    <view class="prompt-card">
+      <textarea class="prompt-input"
+        placeholder="{{activeMode === 'img2img' ? '描述你想要的风格或效果，例如：换成动漫画风、加上樱花背景' : i18n['create.placeholder']}}"
+        placeholder-class="prompt-ph" value="{{prompt}}" bindinput="onPromptInput"
+        maxlength="500" auto-height />
+      <view class="prompt-footer">
+        <text class="char-count">{{prompt.length}} / 500</text>
+        <text class="enhance tap">{{i18n['create.enhance']}}</text>
+      </view>
+    </view>
+
+    <!-- 快捷提示词（仅文生图） -->
+    <scroll-view wx:if="{{activeMode === 'text2img'}}" scroll-x enhanced show-scrollbar="{{false}}" class="quick-scroll">
+      <view class="quick-list">
+        <view class="quick-chip tap" wx:for="{{quickPrompts}}" wx:key="*this"
+          bindtap="onQuickPrompt" data-p="{{item}}">{{item}}</view>
+      </view>
+    </scroll-view>
+
+    <!-- Styles -->
+    <view class="sec-row">
+      <text class="label sec-label">{{i18n['create.style']}}</text>
+      <text class="label sec-sub">{{styles.length}} {{i18n['create.tones']}}</text>
+    </view>
+    <scroll-view scroll-x enhanced show-scrollbar="{{false}}" class="styles-scroll">
+      <view class="styles-list">
+        <view class="style-cell tap" wx:for="{{styles}}" wx:key="id"
+          bindtap="selectStyle" data-id="{{item.id}}">
+          <view class="style-card {{selectedStyleId === item.id ? 'active' : ''}}"
+            style="background: {{item.color}};"/>
+          <text class="display style-n {{selectedStyleId === item.id ? 'on' : ''}}">{{item.name}}</text>
+          <text class="label style-en">{{item.id}}</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- Ratios -->
+    <view class="sec-row">
+      <text class="label sec-label">{{i18n['create.format']}}</text>
+    </view>
+    <view class="ratio-list">
+      <view class="ratio-item {{selectedRatio === item.value ? 'active' : ''}}"
+        wx:for="{{ratios}}" wx:key="value"
+        bindtap="selectRatio" data-value="{{item.value}}">
+        <view class="ratio-box" style="width: {{item.w * 4}}rpx; height: {{item.h * 4}}rpx;"/>
+        <text class="label ratio-name">{{item.label}}</text>
+      </view>
+    </view>
+
+    <!-- Generate -->
+    <view class="gen-area">
+      <view class="btn-ember tap" wx:if="{{phase === 'idle'}}" bindtap="generate">
+        <text class="btn-ember-icon">✦</text>
+        <text>{{i18n['create.generate']}}</text>
+      </view>
+
+      <block wx:elif="{{phase === 'uploading' || phase === 'generating'}}">
+        <view class="btn-ember loading">
+          <view class="spinner rotate"/>
+          <text>{{i18n['create.rendering']}} · {{progress}}%</text>
+        </view>
+        <view class="progress-track">
+          <view class="progress-fill" style="width: {{progress}}%;"/>
+        </view>
+      </block>
+
+      <block wx:elif="{{phase === 'done'}}">
+        <view class="audit-ai-banner">
+          <text class="audit-ai-banner-title">AI生成内容标识</text>
+          <text class="audit-ai-banner-sub">本结果为 AI 生成 / 人工智能生成，仅供参考</text>
+        </view>
+        <view class="result-wrap" wx:if="{{resultImage}}">
+          <image src="{{resultImage}}" mode="widthFix" class="result-img"
+            show-menu-by-longpress binderror="onImageError"/>
+          <!-- AI 生成显著标识：覆盖在结果图右上角，确保用户清晰可见 -->
+          <view class="result-ai-tag">
+            <text class="result-ai-tag-l">AI</text>
+            <text class="result-ai-tag-t">人工智能生成</text>
+          </view>
+        </view>
+        <text class="result-disclaimer">以上内容由 AI 自动生成，仅供参考，不代表真实事件或人物。</text>
+        <view class="result-btns">
+          <view class="btn-ghost tap" bindtap="retryGenerate">{{i18n['create.regen']}}</view>
+          <view class="btn-cream tap" bindtap="saveImage">
+            <text class="btn-cream-icon">↓</text>
+            <text>{{i18n['create.save']}}</text>
+          </view>
+        </view>
+      </block>
+
+      <view class="usage-row" wx:if="{{usageInfo}}">
+        <view class="usage-dot"/>
+        <text wx:if="{{usageInfo.isVip}}" class="usage-text">{{i18n['create.vip.unlimited']}}</text>
+        <block wx:else>
+          <text class="usage-text">{{i18n['create.vip.remain']}} <text class="usage-num">{{usageInfo.limit - usageInfo.used}} / {{usageInfo.limit}}</text></text>
+          <text class="usage-link tap" bindtap="openPayPopup">{{i18n['create.vip.upgrade']}}</text>
+        </block>
+      </view>
+
+      <!-- Enhanced prompt -->
+      <view class="skill-info-bar" wx:if="{{enhancedPrompt}}">
+        <view class="skill-badge" wx:if="{{skillName}}">
+          <text class="skill-badge-icon">✦</text>
+          <text class="skill-badge-text">{{skillName}}</text>
+        </view>
+        <view class="enhanced-toggle tap" bindtap="toggleEnhancedPrompt">
+          <text>{{showEnhancedPrompt ? '收起 ↑' : '查看优化提示词 ↓'}}</text>
+        </view>
+      </view>
+      <view class="enhanced-prompt-box" wx:if="{{enhancedPrompt && showEnhancedPrompt}}">
+        <text class="enhanced-prompt-label">SKILL ENHANCED</text>
+        <text class="enhanced-prompt-text" user-select>{{enhancedPrompt}}</text>
+      </view>
+    </view>
+
+    <view class="dock-spacer"/>
+  </scroll-view>
+
+  <!-- VIP popup -->
+  <view class="popup-mask {{showPayPopup ? '' : 'hidden'}}" bindtap="closePayPopup"/>
+  <view class="popup-sheet vip-sheet {{showPayPopup ? 'show' : ''}}">
+    <view class="popup-handle"/>
+
+    <!-- VIP header art -->
+    <view class="vip-hero">
+      <view class="vip-hero-ring vip-ring-a"/>
+      <view class="vip-hero-ring vip-ring-b"/>
+      <view class="vip-hero-body">
+        <view class="vip-hero-top">
+          <view class="ic ic-sparkle vip-spark"/>
+          <text class="label vip-hero-label">MIAOSEC · ATELIER</text>
+        </view>
+        <text class="display vip-hero-title">Unlimited frames,</text>
+        <text class="display display-italic vip-hero-title">endless stories.</text>
+      </view>
+    </view>
+
+    <!-- Perks -->
+    <view class="vip-perks">
+      <view class="vip-perk">
+        <view class="vip-perk-dot"/>
+        <view class="vip-perk-text">
+          <text class="vip-perk-n">无限生成</text>
+          <text class="label vip-perk-en">UNLIMITED · 不限次数渲染</text>
+        </view>
+      </view>
+      <view class="vip-perk">
+        <view class="vip-perk-dot"/>
+        <view class="vip-perk-text">
+          <text class="vip-perk-n">全部风格</text>
+          <text class="label vip-perk-en">ALL STYLES · 12 套风格解锁</text>
+        </view>
+      </view>
+      <view class="vip-perk">
+        <view class="vip-perk-dot"/>
+        <view class="vip-perk-text">
+          <text class="vip-perk-n">优先队列</text>
+          <text class="label vip-perk-en">PRIORITY · 无需排队等待</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Plans -->
+    <view class="vip-plans">
+      <view class="vip-plan {{selectedVipPlan === 'month' ? 'active' : ''}}" bindtap="selectVipPlan" data-plan="month">
+        <view class="vip-plan-head">
+          <text class="label vip-plan-en">MONTHLY</text>
+          <text class="vip-plan-n">月卡</text>
+        </view>
+        <view class="vip-plan-price-row">
+          <text class="display vip-plan-price">¥19.9</text>
+          <text class="vip-plan-unit">/月</text>
+        </view>
+        <view class="vip-radio"/>
+      </view>
+      <view class="vip-plan {{selectedVipPlan === 'year' ? 'active' : ''}}" bindtap="selectVipPlan" data-plan="year">
+        <view class="vip-plan-badge">省 50%</view>
+        <view class="vip-plan-head">
+          <text class="label vip-plan-en">ANNUAL</text>
+          <text class="vip-plan-n">年卡</text>
+        </view>
+        <view class="vip-plan-price-row">
+          <text class="display vip-plan-price">¥199.9</text>
+          <text class="vip-plan-unit">/年</text>
+        </view>
+        <text class="vip-plan-avg">约 ¥16.5 / 月</text>
+        <view class="vip-radio"/>
+      </view>
+    </view>
+
+    <view class="vip-cta">
+      <view class="ios-pay-notice">
+        <text class="ios-pay-notice-t">本版本会员购买统一使用「小程序虚拟支付」</text>
+        <text class="ios-pay-notice-s">iOS 与 Android 均走虚拟支付通道，最终到账以服务端订单状态为准。</text>
+      </view>
+      <view class="btn-ember tap" bindtap="subscribe">
+        <text class="btn-ember-icon">✦</text>
+        <text>立即开通</text>
+      </view>
+      <text class="vip-policy">开通即代表同意 <text class="vip-link">会员协议</text></text>
+    </view>
+  </view>
+
+  <!-- 隐藏 canvas：保存/下载时合成「AI生成」水印（不影响预览） -->
+  <canvas type="2d" id="watermarkCanvas" class="watermark-canvas"/>
+
+  <!-- Share popup -->
+  <view class="popup-mask {{showShareMenu ? '' : 'hidden'}}" bindtap="closeShareMenu"/>
+  <view class="popup-sheet {{showShareMenu ? 'show' : ''}}">
+    <view class="popup-handle"/>
+    <text class="popup-title display">分享作品</text>
+    <view class="share-options">
+      <button class="share-btn" open-type="share" bindtap="closeShareMenu">
+        <view class="ic ic-send share-icon"/>
+        <text class="share-name">发给好友</text>
+      </button>
+      <view class="share-btn tap" bindtap="onSavePoster">
+        <view class="ic ic-poster share-icon"/>
+        <text class="share-name">保存海报</text>
+      </view>
+    </view>
+  </view>
+
+</view>
+
+<privacy-popup/>

@@ -1,0 +1,269 @@
+<!-- Upload · My Uploaded Photos -->
+<view class="page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
+
+  <!-- Nav -->
+  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner" style="min-height: 44px;">
+      <view class="ic ic-back tap" bindtap="goBack"/>
+      <text class="label-mono nav-title">MY UPLOADS</text>
+      <view class="ic ic-plus tap" bindtap="chooseImage"/>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="content" style="padding-top: {{navBarHeight}}px;"
+               scroll-into-view="{{scrollTo}}" scroll-with-animation>
+
+    <!-- Stats bar -->
+    <view class="stats-bar">
+      <view class="stat-cell">
+        <text class="stat-n">{{total}}</text>
+        <text class="stat-k">PHOTOS</text>
+      </view>
+      <view class="stat-divider"/>
+      <view class="stat-cell">
+        <text class="stat-n">{{cloudCount}}</text>
+        <text class="stat-k">ON CLOUD</text>
+      </view>
+      <view class="stat-divider"/>
+      <view class="stat-cell">
+        <text class="stat-n">{{totalSize}}</text>
+        <text class="stat-k">USED</text>
+      </view>
+    </view>
+
+    <!-- 「我的上传」快捷入口 -->
+    <view class="my-uploads-entry tap" bindtap="onViewMyUploads">
+      <view class="mu-icon">
+        <view class="ic ic-cloud" style="background-color: var(--ember); width: 36rpx; height: 36rpx;"/>
+      </view>
+      <view class="mu-text">
+        <text class="mu-title">我的上传</text>
+        <text class="mu-sub">查看自己上传过的图片</text>
+      </view>
+      <view class="mu-right">
+        <text class="mu-count">{{recentPhotos.length}}</text>
+        <text class="mu-arrow">›</text>
+      </view>
+    </view>
+
+    <!-- Empty state: 只要当前没有待处理的图片就显示，方便继续上传 -->
+    <view class="empty-state" bindtap="chooseImage" wx:if="{{photos.length === 0}}">
+      <view class="empty-icon">
+        <view class="ic ic-upload-cloud" style="background-color: var(--ink-3); width: 96rpx; height: 96rpx;"/>
+      </view>
+      <text class="empty-title">还没有上传</text>
+      <text class="empty-sub">Tap to choose photos from album</text>
+      <view class="empty-formats">
+        <text class="format-tag">JPG</text>
+        <text class="format-tag">PNG</text>
+        <text class="format-tag">WEBP</text>
+        <text class="format-tag">GIF</text>
+      </view>
+    </view>
+
+    <!-- Uploading queue -->
+    <view class="queue-header" wx:if="{{uploadingCount > 0}}">
+      <text class="section-eyebrow">UPLOADING</text>
+      <text class="section-count">{{uploadingCount}}</text>
+    </view>
+
+    <!-- Photo cards -->
+    <view class="photo-list" wx:if="{{photos.length > 0 || (showRecent && recentPhotos.length > 0)}}">
+
+      <!-- Uploading / current session cards -->
+      <block wx:for="{{photos}}" wx:key="id">
+        <view class="photo-card" data-index="{{index}}">
+
+          <!-- Photo with real aspect ratio -->
+          <view class="photo-wrap" bindtap="previewPhoto" data-index="{{index}}">
+            <image
+              class="photo-img"
+              src="{{item.displayUrl}}"
+              mode="widthFix"
+              lazy-load
+            />
+            <!-- Upload progress overlay -->
+            <view class="upload-overlay" wx:if="{{item.uploading}}">
+              <view class="ring"/>
+              <text class="pct">{{item.progress || 0}}%</text>
+            </view>
+            <!-- Failed overlay -->
+            <view class="fail-overlay tap" wx:if="{{item.failed}}" bindtap="retryUpload" data-index="{{index}}">
+              <view class="ic ic-x" style="background-color: var(--ember); width: 48rpx; height: 48rpx;"/>
+              <text class="fail-lbl">TAP TO RETRY</text>
+            </view>
+            <!-- Cloud badge -->
+            <view class="cloud-tag" wx:if="{{item.fileID && !item.uploading && !item.failed}}">
+              <view class="ic ic-cloud" style="background-color: #fff; width: 18rpx; height: 18rpx;"/>
+              <text class="cloud-lbl">CLOUD</text>
+            </view>
+            <!-- Status badge for pending photos -->
+            <view class="status-tag status-{{item.status}}" wx:if="{{!item.fileID && !item.uploading && !item.failed}}">
+              <text class="status-lbl">{{item.status === 'draft' ? '待编辑' : '待上传'}}</text>
+            </view>
+          </view>
+
+          <!-- Name + Tags row（仅在非上传中显示） -->
+          <view class="name-row" wx:if="{{!item.uploading}}">
+            <view class="name-line">
+              <text class="photo-name">{{item.name || '未命名'}}</text>
+              <text class="rename-btn tap" catchtap="onEditPhoto" data-item="{{item}}" data-from="current">编辑</text>
+            </view>
+            <view class="tag-row" wx:if="{{item.tags && item.tags.length > 0}}">
+              <text class="tag-chip" wx:for="{{item.tags}}" wx:for-item="t" wx:key="*this">#{{t}}</text>
+            </view>
+          </view>
+
+          <!-- Metadata strip -->
+          <view class="meta-strip">
+            <view class="meta-left">
+              <text class="meta-item" wx:if="{{item.meta}}">{{item.meta.width}} × {{item.meta.height}}</text>
+              <text class="meta-dot" wx:if="{{item.meta}}">·</text>
+              <text class="meta-item">{{item.sizeLabel}}</text>
+              <text class="meta-dot" wx:if="{{item.format}}">·</text>
+              <text class="meta-item">{{item.format}}</text>
+            </view>
+            <text class="meta-time">{{item.uploadTime || 'UPLOADING...'}}</text>
+          </view>
+
+          <!-- Action strip -->
+          <view class="action-strip" wx:if="{{!item.uploading}}">
+            <view class="act-btn tap" bindtap="previewPhoto" data-index="{{index}}">
+              <view class="ic ic-expand" style="background-color: var(--cream-3); width: 32rpx; height: 32rpx;"/>
+              <text class="act-lbl">预览</text>
+            </view>
+            <view class="act-btn act-ref tap" bindtap="onUseAsReference" data-item="{{item}}">
+              <view class="ic ic-ref" style="background-color: var(--ember); width: 32rpx; height: 32rpx;"/>
+              <text class="act-lbl act-lbl-ember">用作参考图</text>
+            </view>
+            <view class="act-btn tap" catchtap="deletePhoto" data-index="{{index}}">
+              <view class="ic ic-trash" style="background-color: var(--ink-4); width: 32rpx; height: 32rpx;"/>
+              <text class="act-lbl">删除</text>
+            </view>
+          </view>
+
+          <!-- Upload progress bar -->
+          <view class="prog-bar" wx:if="{{item.uploading}}">
+            <view class="prog-fill" style="width: {{item.progress || 0}}%;"/>
+          </view>
+
+        </view>
+      </block>
+
+      <!-- 我的上传 · history -->
+      <view id="history-anchor" class="queue-header" wx:if="{{showRecent && recentPhotos.length > 0}}">
+        <text class="section-eyebrow">我的上传 · MY UPLOADS</text>
+        <text class="section-count">{{recentPhotos.length}}</text>
+      </view>
+
+      <!-- Recent history cards -->
+      <block wx:if="{{showRecent}}" wx:for="{{recentPhotos}}" wx:key="id">
+        <view class="photo-card">
+
+          <view class="photo-wrap" bindtap="onPreviewHistory" data-item="{{item}}">
+            <image
+              class="photo-img"
+              src="{{item.displayUrl}}"
+              mode="widthFix"
+              lazy-load
+            />
+            <view class="cloud-tag" wx:if="{{item.fileID}}">
+              <view class="ic ic-cloud" style="background-color: #fff; width: 18rpx; height: 18rpx;"/>
+              <text class="cloud-lbl">CLOUD</text>
+            </view>
+          </view>
+
+          <!-- Name + Tags row（历史卡片） -->
+          <view class="name-row">
+            <view class="name-line">
+              <text class="photo-name">{{item.name || '未命名'}}</text>
+              <text class="rename-btn tap" catchtap="onEditPhoto" data-item="{{item}}" data-from="history">编辑</text>
+            </view>
+            <view class="tag-row" wx:if="{{item.tags && item.tags.length > 0}}">
+              <text class="tag-chip" wx:for="{{item.tags}}" wx:for-item="t" wx:key="*this">#{{t}}</text>
+            </view>
+          </view>
+
+          <view class="meta-strip">
+            <view class="meta-left">
+              <text class="meta-item" wx:if="{{item.meta}}">{{item.meta.width}} × {{item.meta.height}}</text>
+              <text class="meta-dot" wx:if="{{item.meta}}">·</text>
+              <text class="meta-item">{{item.sizeLabel || '--'}}</text>
+              <text class="meta-dot" wx:if="{{item.format}}">·</text>
+              <text class="meta-item">{{item.format || '--'}}</text>
+            </view>
+            <text class="meta-time">{{item.uploadTime || ''}}</text>
+          </view>
+
+          <view class="action-strip">
+            <view class="act-btn tap" bindtap="onPreviewHistory" data-item="{{item}}">
+              <view class="ic ic-expand" style="background-color: var(--cream-3); width: 32rpx; height: 32rpx;"/>
+              <text class="act-lbl">预览</text>
+            </view>
+            <view class="act-btn act-ref tap" bindtap="onUseAsReference" data-item="{{item}}">
+              <view class="ic ic-ref" style="background-color: var(--ember); width: 32rpx; height: 32rpx;"/>
+              <text class="act-lbl act-lbl-ember">用作参考图</text>
+            </view>
+            <view class="act-btn tap" catchtap="deleteHistory" data-item="{{item}}">
+              <view class="ic ic-trash" style="background-color: var(--ink-4); width: 32rpx; height: 32rpx;"/>
+              <text class="act-lbl">删除</text>
+            </view>
+          </view>
+
+        </view>
+      </block>
+
+    </view>
+
+    <!-- Tips -->
+    <view class="tips-card" wx:if="{{showRecent && recentPhotos.length > 0}}">
+      <text class="tips-head">TIPS</text>
+      <view class="tips-item">
+        <view class="ic ic-check" style="background-color: var(--ember); width: 22rpx; height: 22rpx;"/>
+        <text class="tips-txt">点击「预览」查看真实尺寸大图</text>
+      </view>
+      <view class="tips-item">
+        <view class="ic ic-check" style="background-color: var(--ember); width: 22rpx; height: 22rpx;"/>
+        <text class="tips-txt">点击「用作参考图」快速进入创作</text>
+      </view>
+      <view class="tips-item">
+        <view class="ic ic-check" style="background-color: var(--ember); width: 22rpx; height: 22rpx;"/>
+        <text class="tips-txt">长按卡片快速删除</text>
+      </view>
+    </view>
+
+    <view class="bottom-spacer"/>
+  </scroll-view>
+
+  <!-- Bottom action: start upload -->
+  <view class="bottom-bar" wx:if="{{pendingCount > 0 && uploadingCount === 0}}">
+    <view class="btn-primary tap" bindtap="startUpload">
+      <text>开始上传 ({{pendingCount}})</text>
+    </view>
+  </view>
+
+  <!-- Edit popup: 名称 + 标签 -->
+  <view class="edit-mask {{showEditPopup ? '' : 'hidden'}}" bindtap="closeEditPopup"/>
+  <view class="edit-sheet {{showEditPopup ? 'show' : ''}}" catchtap="">
+    <view class="edit-handle"/>
+    <text class="edit-title">编辑图片</text>
+
+    <view class="form-row">
+      <text class="form-label">名称</text>
+      <input class="form-input" value="{{editingName}}" bindinput="onEditNameInput"
+             maxlength="40" placeholder="给这张图片起个名字" placeholder-class="form-ph" />
+    </view>
+    <view class="form-row">
+      <text class="form-label">标签</text>
+      <input class="form-input" value="{{editingTags}}" bindinput="onEditTagsInput"
+             maxlength="60" placeholder="多个标签用逗号分隔，如：人像,风景" placeholder-class="form-ph" />
+      <text class="form-hint">最多 8 个，按逗号 / 顿号 / 空格分隔</text>
+    </view>
+
+    <view class="edit-btns">
+      <view class="edit-btn edit-btn-ghost tap" bindtap="closeEditPopup">取消</view>
+      <view class="edit-btn edit-btn-primary tap" bindtap="saveEdit">保存</view>
+    </view>
+  </view>
+
+</view>

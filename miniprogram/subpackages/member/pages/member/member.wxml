@@ -1,0 +1,119 @@
+<!-- Member · Editorial subscription -->
+<view class="page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
+  <scroll-view scroll-y class="scroll">
+
+    <!-- Header -->
+    <view class="head" style="padding-top: {{statusBarHeight}}px;">
+      <view class="head-row">
+        <view class="ic ic-back tap" bindtap="goBack"/>
+        <text class="label head-eyebrow">{{i18n['member.eyebrow']}}</text>
+        <view class="head-spacer"/>
+      </view>
+
+      <!-- Display title — runs two lines, second is italic -->
+      <view class="head-title">
+        <text class="display d-big">{{i18n['member.title.1']}}</text>
+        <text class="display display-italic d-big">{{i18n['member.title.2']}}</text>
+      </view>
+    </view>
+
+    <!-- Status strip -->
+    <view class="status">
+      <view class="status-dot"/>
+      <text class="label status-name">{{userInfo.nickName || '—'}}</text>
+      <text class="label status-sep">·</text>
+      <text class="label status-badge {{vipLevel !== 'free' ? 'on' : ''}}">
+        {{vipLevel === 'free' ? i18n['member.status.free'] : i18n['member.status.vip']}}
+      </text>
+      <text wx:if="{{vipExpireTime}}" class="label status-expire">{{vipExpireTime}} {{i18n['member.status.expire']}}</text>
+    </view>
+
+    <!-- 全端虚拟支付提示 -->
+    <view class="ios-notice">
+      <view class="ios-notice-dot"/>
+      <view class="ios-notice-body">
+        <text class="ios-notice-title">本版本会员购买统一使用「小程序虚拟支付」</text>
+        <text class="ios-notice-sub">iOS 与 Android 均走虚拟支付通道，会员到账以后端订单状态为准。</text>
+      </view>
+    </view>
+
+    <!-- Plans -->
+    <view class="sec">
+      <view class="sec-head">
+        <view class="sec-title-row">
+          <text class="display sec-title">{{i18n['member.sec.plan']}}</text>
+          <text class="display display-italic sec-title-it">{{i18n['member.sec.plan.it']}}</text>
+        </view>
+        <text class="eyebrow sec-count">02</text>
+      </view>
+
+      <view class="plan-grid">
+        <!-- Month plan -->
+        <view class="plan-card tap {{selectedPlan === 'month' ? 'on' : ''}}" bindtap="selectPlan" data-plan="month">
+          <text class="label plan-en">{{i18n['member.plan.monthly']}}</text>
+          <text class="display plan-n">{{i18n['member.plan.month']}}</text>
+          <view class="plan-price-row">
+            <text class="display plan-price">¥19.9</text>
+            <text class="plan-unit">{{i18n['member.plan.unit.month']}}</text>
+          </view>
+          <text class="label plan-foot">{{i18n['member.plan.month.original']}}</text>
+        </view>
+
+        <!-- Year plan -->
+        <view class="plan-card tap {{selectedPlan === 'year' ? 'on' : ''}}" bindtap="selectPlan" data-plan="year">
+          <view class="plan-badge">{{i18n['member.plan.year.badge']}}</view>
+          <text class="label plan-en">{{i18n['member.plan.annual']}}</text>
+          <text class="display plan-n">{{i18n['member.plan.year']}}</text>
+          <view class="plan-price-row">
+            <text class="display plan-price">¥199.9</text>
+            <text class="plan-unit">{{i18n['member.plan.unit.year']}}</text>
+          </view>
+          <text class="label plan-foot">{{i18n['member.plan.year.avg']}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Perks — editorial numbered list -->
+    <view class="sec">
+      <view class="sec-head">
+        <view class="sec-title-row">
+          <text class="display sec-title">{{i18n['member.sec.perks']}}</text>
+          <text class="display display-italic sec-title-it">{{i18n['member.sec.perks.it']}}</text>
+        </view>
+        <text class="eyebrow sec-count">04</text>
+      </view>
+
+      <view class="perk-list">
+        <view class="perk-row" wx:for="{{perks}}" wx:key="n">
+          <text class="display display-italic perk-num">0{{item.n}}</text>
+          <view class="perk-body">
+            <text class="display perk-t">{{i18n[item.titleKey]}}</text>
+            <text class="label perk-meta">{{i18n[item.subKey]}}</text>
+          </view>
+          <view class="perk-dot"/>
+        </view>
+      </view>
+    </view>
+
+    <!-- Bottom breathing room for the sticky CTA -->
+    <view class="cta-spacer"/>
+  </scroll-view>
+
+  <!-- Sticky bottom CTA -->
+  <view class="cta-dock">
+    <view class="cta-row">
+      <view class="cta-total">
+        <text class="label cta-total-l">{{i18n['member.total']}}</text>
+        <view class="cta-total-n-row">
+          <text class="display cta-total-n">¥{{selectedPlan === 'month' ? '19.9' : '199.9'}}</text>
+          <text class="cta-total-unit">{{selectedPlan === 'month' ? i18n['member.plan.unit.month'] : i18n['member.plan.unit.year']}}</text>
+        </view>
+      </view>
+      <view class="cta-btn tap" bindtap="subscribe">
+        <text class="cta-btn-t">{{i18n['member.cta']}}</text>
+        <text class="cta-btn-arrow">→</text>
+      </view>
+    </view>
+    <text class="label cta-sub">全端虚拟支付 · 会员到账以后端订单状态为准</text>
+  </view>
+</view>

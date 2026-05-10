@@ -1,0 +1,9 @@
+{
+  "name": "pay-notify-virtual",
+  "version": "1.0.0",
+  "description": "小程序虚拟支付（米大师）发货回调",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

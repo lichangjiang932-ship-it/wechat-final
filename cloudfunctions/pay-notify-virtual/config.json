@@ -1,0 +1,12 @@
+{
+  "timeout": 20,
+  "memorySize": 256,
+  "runtime": "Nodejs18.15",
+  "triggers": [
+    {
+      "name": "payNotifyVirtual",
+      "type": "http",
+      "path": "/pay-notify-virtual"
+    }
+  ]
+}

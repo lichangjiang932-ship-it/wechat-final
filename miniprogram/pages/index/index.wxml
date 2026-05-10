@@ -1,0 +1,174 @@
+<!-- Home · Editorial gallery -->
+<view class="page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
+  <scroll-view scroll-y class="scroll" style="padding-top: {{statusBarHeight}}px;">
+
+    <!-- Masthead -->
+    <view class="masthead">
+      <view class="mast-top">
+        <view class="mast-icons">
+          <view class="ic ic-search tap" bindtap="goDiscover"/>
+          <view class="ic ic-bell tap"/>
+        </view>
+        <text class="eyebrow">{{dateStr}}</text>
+      </view>
+      <view class="mast-title">
+        <text class="display d-big">{{i18n['home.mast.title1']}}</text>
+        <text class="display display-italic d-big">{{i18n['home.mast.title2']}}</text>
+      </view>
+      <text class="mast-sub">{{i18n['home.mast.sub']}}</text>
+    </view>
+
+    <!-- AI 生成内容显著标识（合规要求） -->
+    <view class="ai-banner-inline">
+      <text class="ai-banner-badge">AI</text>
+      <text class="ai-banner-t">本页展示作品均由人工智能生成，仅供参考，不代表真实事件或人物</text>
+    </view>
+
+    <!-- Feature hero -->
+    <view class="hero">
+      <view class="hero-ph ph ph-ember tap" bindtap="onHeroTap">
+        <image wx:if="{{imgReady && banners[0].cover}}" class="hero-img" src="{{banners[0].cover}}" mode="aspectFill"/>
+      </view>
+      <view class="hero-scrim"/>
+      <view class="ai-corner ai-corner-hero">AI 生成</view>
+      <view class="hero-top">
+        <view class="live-dot"><view class="live-pulse"/></view>
+        <text class="label hero-live">{{i18n['home.hero.live']}}</text>
+      </view>
+      <view class="hero-play">
+        <view class="ic ic-play"/>
+      </view>
+      <view class="hero-bottom tap" bindtap="onHeroTap">
+        <text class="display hero-title">{{heroTitle}}</text>
+        <text class="hero-desc">{{heroDesc}}</text>
+      </view>
+    </view>
+
+    <!-- Studio tools -->
+    <view class="sec">
+      <view class="sec-head">
+        <view class="sec-title-row">
+          <text class="display sec-title">{{i18n['home.sec.studio']}}</text>
+          <text class="display display-italic sec-title-it">{{i18n['home.sec.studio.it']}}</text>
+        </view>
+        <text class="eyebrow sec-count">{{i18n['home.studio.count']}}</text>
+      </view>
+      <view class="studio-grid">
+        <view class="studio-cell tap" wx:for="{{studioTools}}" wx:key="id"
+              bindtap="onStudioTap" data-tool="{{item}}">
+          <view class="studio-orb ph {{item.tone}}"/>
+          <view class="studio-body">
+            <view class="ic ic-{{item.icon}}"/>
+            <view class="studio-text">
+              <text class="display studio-n">{{i18n[item.nameKey]}}</text>
+              <text class="label studio-en">{{i18n[item.enKey]}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 热门模板 · Inspire -->
+    <view class="sec">
+      <view class="sec-head">
+        <view class="sec-title-row">
+          <text class="display sec-title">{{i18n['home.sec.inspire']}}</text>
+          <text class="display display-italic sec-title-it">{{i18n['home.sec.inspire.it']}}</text>
+        </view>
+        <text class="eyebrow">{{i18n['home.sec.inspire.sub']}}</text>
+      </view>
+      <view class="tpl-scroll">
+        <view class="tpl-card tap" wx:for="{{hotTemplates}}" wx:key="id" bindtap="onTplTap" data-tpl="{{item}}">
+          <view class="tpl-cover tap" bindtap="onTplImgTap" data-tpl="{{item}}">
+            <image wx:if="{{imgReady && item.cover}}" class="tpl-img" src="{{item.cover}}" mode="aspectFill"/>
+            <view wx:if="{{item.tag}}" class="tpl-tag">{{item.tag}}</view>
+            <view class="ai-corner">AI</view>
+          </view>
+          <view class="tpl-info">
+            <text class="tpl-name">{{item.name}}</text>
+            <text class="tpl-uses">{{item.uses}} · {{i18n['home.uses']}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 灵感画廊 · Editorial bento -->
+    <view class="sec">
+      <view class="sec-head">
+        <view class="sec-title-row">
+          <text class="display sec-title">{{i18n['home.sec.gallery']}}</text>
+          <text class="display display-italic sec-title-it">{{i18n['home.sec.gallery.it']}}</text>
+        </view>
+      </view>
+      <view class="bento-grid">
+        <view
+          wx:for="{{galleryCells}}" wx:key="key"
+          class="bento-cell tap ph {{item.tone}}"
+          style="grid-area: {{item.area}};"
+          bindtap="onInspireImgTap" data-key="{{item.key}}">
+          <image wx:if="{{imgReady && inspireImages[item.key]}}" class="bento-img" src="{{inspireImages[item.key]}}" mode="aspectFill"/>
+          <view class="bento-shade"/>
+          <view class="bento-tag">{{item.tag}}</view>
+          <view class="ai-corner ai-corner-bento">AI</view>
+          <view class="bento-body">
+            <text class="display bento-name">{{i18n[item.nameKey]}}</text>
+            <text class="label bento-meta">{{item.by}} · ♡ {{item.likes}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Editorial stories -->
+    <view class="sec">
+      <view class="sec-head">
+        <view>
+          <text class="eyebrow sec-sub-eyebrow">{{i18n['home.sec.editorial.eyebrow']}}</text>
+          <view class="sec-title-row">
+            <text class="display sec-title">{{i18n['home.sec.editorial.title1']}}</text>
+            <text class="display display-italic sec-title-it">{{i18n['home.sec.editorial.title2']}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="story-list">
+        <view class="story-row tap" wx:for="{{stories}}" wx:key="n"
+              bindtap="onStoryTap" data-story="{{item}}">
+          <text class="display display-italic story-num">0{{item.n}}</text>
+          <view class="story-body">
+            <text class="display story-t">{{i18n[item.titleKey]}}</text>
+            <text class="label story-meta">{{i18n[item.metaKey]}}</text>
+          </view>
+          <view class="story-thumb ph {{item.tone}}"/>
+        </view>
+      </view>
+    </view>
+
+    <!-- Community mosaic -->
+    <view class="sec sec-last">
+      <view class="sec-head">
+        <view>
+          <text class="eyebrow sec-sub-eyebrow">{{i18n['home.sec.community.eyebrow']}}</text>
+          <view class="sec-title-row">
+            <text class="display sec-title">{{i18n['home.sec.community.title1']}}</text>
+            <text class="display display-italic sec-title-it">{{i18n['home.sec.community.title2']}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="comm-grid">
+        <view
+          wx:for="{{communityCells}}" wx:key="i"
+          class="comm-cell tap"
+          style="grid-area: {{item.area}};"
+          bindtap="onCommTap" data-i="{{item.i}}">
+          <image wx:if="{{imgReady && communityImages[item.i]}}" class="comm-img" src="{{communityImages[item.i]}}" mode="aspectFill"/>
+          <view class="comm-shade"/>
+          <view class="comm-by">{{item.by}}</view>
+          <view class="ai-corner">AI</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="dock-spacer"/>
+  </scroll-view>
+</view>
+
+<privacy-popup/>

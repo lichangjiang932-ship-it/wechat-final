@@ -1,0 +1,165 @@
+<!-- subpackages/poster/pages/poster/poster.wxml — 童趣海报定制 -->
+<view class="page poster-page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
+
+  <!-- Custom nav -->
+  <view class="nav" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight + statusBarHeight}}px;">
+    <view class="nav-row" style="height: {{navBarHeight}}px;">
+      <view class="ic ic-back tap" bindtap="onBack"/>
+      <text class="label nav-title">我的海报 · POSTER STUDIO</text>
+      <view class="nav-spacer"/>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="scroll" style="padding-top: {{statusBarHeight + navBarHeight}}px;">
+
+    <!-- AI 合规标识 -->
+    <view class="ai-notice">
+      <view class="ai-notice-badge">AI</view>
+      <view class="ai-notice-body">
+        <text class="ai-notice-title">本海报由人工智能合成</text>
+        <text class="ai-notice-sub">AI Composed · 学员照片由用户上传 · 文字与版式由程序生成</text>
+      </view>
+    </view>
+
+    <!-- Hero -->
+    <view class="hero">
+      <text class="label hero-eyebrow">§ POSTER · KIDS SHOWCASE 2026</text>
+      <view class="hero-title">
+        <text class="display d-big">童趣</text>
+        <text class="display display-italic d-big">作品展</text>
+      </view>
+      <text class="hero-sub">米黄背景 · 云朵框 · 小马 Hello · 一张就出 1080×1440</text>
+    </view>
+
+    <!-- Step indicator -->
+    <view class="steps">
+      <block wx:for="{{stepDefs}}" wx:key="key">
+        <view class="step {{step >= index ? 'active' : ''}} {{step === index ? 'current' : ''}}">
+          <text class="step-n">{{index + 1}}</text>
+          <text class="label step-l">{{item.label}}</text>
+        </view>
+        <view wx:if="{{index < stepDefs.length - 1}}" class="step-bar {{step > index ? 'on' : ''}}"/>
+      </block>
+    </view>
+
+    <!-- Step 1 · Name -->
+    <block wx:if="{{step === 0}}">
+      <view class="card">
+        <text class="label card-eyebrow">01 · NAME</text>
+        <text class="display card-title">学员姓名</text>
+        <text class="card-hint">显示在海报中央"学员姓名："字段后</text>
+        <input class="field" type="text" placeholder="例如：小九"
+               placeholder-class="field-ph" cursor-spacing="40"
+               value="{{name}}" bindinput="onNameInput" maxlength="12" focus="{{step===0}}"/>
+        <text class="char-count">{{name.length}} / 12</text>
+      </view>
+    </block>
+
+    <!-- Step 2 · Age -->
+    <block wx:if="{{step === 1}}">
+      <view class="card">
+        <text class="label card-eyebrow">02 · AGE</text>
+        <text class="display card-title">年龄</text>
+        <text class="card-hint">数字即可</text>
+        <view class="age-row">
+          <view wx:for="{{quickAges}}" wx:key="*this"
+                class="age-pill {{age === item ? 'active' : ''}}"
+                data-age="{{item}}" bindtap="pickAge">
+            <text>{{item}}</text>
+          </view>
+        </view>
+        <input class="field" type="number" placeholder="或自定义输入"
+               placeholder-class="field-ph" cursor-spacing="40"
+               value="{{age}}" bindinput="onAgeInput" maxlength="3"/>
+      </view>
+    </block>
+
+    <!-- Step 3 · Hobby + AI Caption -->
+    <block wx:if="{{step === 2}}">
+      <view class="card">
+        <text class="label card-eyebrow">03 · HOBBY</text>
+        <text class="display card-title">爱好</text>
+        <text class="card-hint">选一个或自由输入，DeepSeek 自动润色成一句童趣文案</text>
+
+        <view class="hobby-row">
+          <view wx:for="{{hobbyChips}}" wx:key="*this"
+                class="hobby-pill {{hobby === item ? 'active' : ''}}"
+                data-h="{{item}}" bindtap="pickHobby">
+            <text>{{item}}</text>
+          </view>
+        </view>
+
+        <input class="field" type="text" placeholder="或自由输入：如 篮球 / 围棋 / 武术"
+               placeholder-class="field-ph" cursor-spacing="40"
+               value="{{hobby}}" bindinput="onHobbyInput"
+               bindconfirm="onHobbyConfirm" confirm-type="done" maxlength="12"/>
+
+        <view class="ai-actions">
+          <view class="btn-mini tap {{aiLoading ? 'disabled' : ''}}" bindtap="generateCaption">
+            <text>{{aiLoading ? 'DeepSeek 生成中…' : '✦ 重新生成文案'}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{caption}}" class="ai-result">
+          <view class="ai-result-head">
+            <text class="label ai-result-l">已生成 · {{caption.length}}/40</text>
+            <text class="ai-result-edit tap" bindtap="toggleCaptionEdit">
+              {{captionEditMode ? '完成' : '编辑'}}
+            </text>
+          </view>
+          <textarea wx:if="{{captionEditMode}}" class="textarea ai-result-edit-area"
+                    placeholder-class="field-ph" cursor-spacing="40"
+                    value="{{caption}}" bindinput="onCaptionInput"
+                    maxlength="40" auto-height/>
+          <text wx:else class="ai-result-t">{{caption}}</text>
+        </view>
+      </view>
+    </block>
+
+    <!-- Step 4 · Photo + Preview -->
+    <block wx:if="{{step === 3}}">
+      <view class="card">
+        <text class="label card-eyebrow">04 · PHOTO</text>
+        <text class="display card-title">学员照片</text>
+        <text class="card-hint">将放入海报右侧圆角矩形框，建议竖向构图</text>
+        <view class="upload tap" bindtap="onChoosePhoto">
+          <block wx:if="{{photo}}">
+            <image src="{{photo}}" mode="aspectFill" class="upload-img"/>
+            <view class="upload-overlay"><text>换一张 / 重选</text></view>
+          </block>
+          <block wx:else>
+            <view class="upload-circle"><view class="ic ic-camera"/></view>
+            <text class="display upload-hint">点击选择照片</text>
+            <text class="label upload-sub">JPG / PNG · 自动裁剪 3:4</text>
+          </block>
+        </view>
+      </view>
+
+      <!-- Preview canvas -->
+      <view class="preview-wrap">
+        <text class="label preview-l">PREVIEW · 1080 × 1440</text>
+        <canvas type="2d" id="posterCanvas" class="preview-canvas" style="width:{{previewW}}px;height:{{previewH}}px;"/>
+        <view wx:if="{{rendering}}" class="preview-mask"><text>合成中…</text></view>
+      </view>
+    </block>
+
+    <view class="dock-spacer"/>
+  </scroll-view>
+
+  <!-- Bottom action bar -->
+  <view class="action-bar safe-bottom">
+    <view wx:if="{{step > 0}}" class="btn-cream tap" bindtap="prevStep">
+      <text class="btn-cream-icon">←</text>
+      <text>上一步</text>
+    </view>
+    <view wx:if="{{step < 3}}" class="btn-ember tap {{canNext ? '' : 'disabled'}}" bindtap="nextStep">
+      <text>下一步</text>
+      <text class="btn-ember-icon">→</text>
+    </view>
+    <view wx:if="{{step === 3}}" class="btn-ember tap {{photo && caption && !rendering ? '' : 'disabled'}}" bindtap="onSavePoster">
+      <text>{{rendering ? '处理中…' : (photo ? '保存到相册' : '请先上传照片')}}</text>
+      <text class="btn-ember-icon">✦</text>
+    </view>
+  </view>
+
+</view>

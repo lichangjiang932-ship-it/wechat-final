@@ -1,0 +1,68 @@
+<view class="policy-page">
+  <scroll-view scroll-y class="scroll">
+
+    <view class="hero">
+      <text class="label eyebrow">§ TERMS · v1.1.0</text>
+      <text class="display title">用户协议</text>
+      <text class="meta">生效日期：2026-05-07</text>
+    </view>
+
+    <view class="content">
+
+<text class="p">欢迎使用妙摄（Miaosec）。请你在使用前仔细阅读本协议。一旦你开始使用本小程序，即视为你已充分理解并同意全部条款。</text>
+
+<text class="h2">一、服务内容</text>
+<text class="p">本小程序向用户提供 AI 图像生成、童趣海报合成、作品收藏管理、付费会员等功能。具体功能可能随版本迭代调整。</text>
+
+<text class="h2">二、账号规则</text>
+<text class="p">- 你必须使用真实有效的微信账号登录</text>
+<text class="p">- 一个微信账号对应一个本小程序账号，不得转让或出借</text>
+<text class="p">- 因账号被盗、违规使用造成的损失由你自行承担</text>
+
+<text class="h2">三、使用规范</text>
+<text class="p">使用本小程序时，你<text class="b">不得</text>：</text>
+<text class="p">- 上传或生成涉政、暴力、色情、低俗、恐怖、辱骂、虚假信息</text>
+<text class="p">- 上传或生成侵犯他人肖像权、著作权、商标权等知识产权的内容</text>
+<text class="p">- 上传或生成涉及未成年人的不当内容</text>
+<text class="p">- 利用本服务从事任何违法犯罪活动</text>
+<text class="p">- 通过技术手段绕过限制、刷量、攻击服务器</text>
+<text class="p">- 倒卖账号、套现会员权益</text>
+<text class="p">违反上述任意一条，我们有权立即封禁账号且不退还任何费用，并保留追究法律责任的权利。</text>
+
+<text class="h2">四、知识产权</text>
+<text class="p"><text class="b">原创内容版权：</text>本小程序的图标、设计、代码、文案归开发者所有。</text>
+<text class="p"><text class="b">AI 生成图像：</text>你通过本服务生成的图像，在你已支付对应费用且不违反上述使用规范的前提下，可用于<text class="b">个人非商业用途</text>。商业用途须另行获得书面授权。</text>
+<text class="p"><text class="b">用户上传内容：</text>你授权本小程序在提供服务必需的范围内使用你上传的图片（仅用于完成生成、合成、保存功能），我们不会将其挪作他用。</text>
+
+<text class="h2">五、付费与退款</text>
+<text class="p">- 会员订阅、单次购买等虚拟商品采用预付费模式，支付完成后立即开通</text>
+<text class="p">- <text class="b">虚拟商品一经购买不支持无理由退款</text>。如因系统故障导致服务无法使用，请通过客服邮箱申请补偿</text>
+<text class="p">- 会员到期不自动续费</text>
+<text class="p">- 我们保留调整定价的权利，但不影响已购买的服务</text>
+
+<text class="h2">六、AI 生成内容免责</text>
+<text class="p">- AI 模型可能产生不准确、不真实或带有偏见的内容，仅供参考与娱乐</text>
+<text class="p">- 你应对自己生成与发布的内容负全部责任</text>
+<text class="p">- 我们不对 AI 生成内容的准确性、合法性、适用性作任何明示或暗示的保证</text>
+
+<text class="h2">七、服务变更与终止</text>
+<text class="p">我们可能因业务调整、技术升级、不可抗力等原因暂停或终止部分/全部服务。如属可控原因，我们将提前通知。</text>
+
+<text class="h2">八、责任限制</text>
+<text class="p">在法律允许的最大范围内，本小程序对你的全部赔偿责任不超过你过去 12 个月内向本服务实际支付的费用总额。</text>
+
+<text class="h2">九、争议解决</text>
+<text class="p">本协议的订立、执行、解释及争议的解决适用中华人民共和国法律。如发生争议，应由开发者所在地有管辖权的人民法院管辖。</text>
+
+<text class="h2">十、联系方式</text>
+<text class="p">- 客服联系：请在「设置 → 关于 → 联系客服」获取最新联系方式</text>
+<text class="p">- 备案信息：见小程序「设置 → 关于」</text>
+
+      <view class="foot">
+        <text class="display display-italic foot-brand">Miaosec</text>
+        <text class="meta">© 2026 妙摄 · 全部权利保留</text>
+      </view>
+    </view>
+
+  </scroll-view>
+</view>

@@ -1,0 +1,106 @@
+<view class="page {{themeClass}}" style="--nav-bar-height: {{navBarHeight}}px;">
+  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner" style="min-height: 44px;">
+      <view>
+        <text class="nav-title">作品展</text>
+        <text class="nav-sub">挑选你喜欢的风格</text>
+      </view>
+      <view class="search-btn tap" bindtap="toggleSearch">
+        <text>搜索</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="search-bar {{showSearch ? 'show' : ''}}" style="top: {{navBarHeight}}px;">
+    <input class="search-input" placeholder="搜索作品或关键词"
+           value="{{searchKeyword}}" bindinput="onSearchInput"
+           focus="{{searchFocus}}" />
+    <text class="search-cancel tap" bindtap="toggleSearch">取消</text>
+  </view>
+
+  <scroll-view scroll-x enhanced show-scrollbar="{{false}}" class="tabs" style="top: {{navBarHeight}}px;">
+    <view class="tab-list">
+      <view class="tab-item {{activeTab === item ? 'active' : ''}} tap"
+            wx:for="{{tabs}}" wx:key="*this"
+            bindtap="switchTab" data-tab="{{item}}">
+        <text class="tab-text">{{item}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <scroll-view scroll-y enhanced show-scrollbar="{{false}}"
+              class="feed-wrap"
+              style="padding-top: calc({{navBarHeight}}px + 80rpx + 8rpx);"
+              bindscrolltolower="loadMore"
+              refresher-enabled refresher-triggered="{{refreshing}}"
+              bindrefresherrefresh="onRefresh">
+
+    <!-- AI 生成内容显著标识（合规要求） -->
+    <view class="ai-banner-inline">
+      <text class="ai-banner-badge">AI</text>
+      <text class="ai-banner-t">本页展示作品均由人工智能生成，仅供参考，不代表真实事件或人物</text>
+    </view>
+
+    <view class="sec sec-last" wx:if="{{!loading || displayWorks.length}}">
+      <view class="sec-head">
+        <view>
+          <text class="eyebrow sec-sub-eyebrow">来自社区</text>
+          <view class="sec-title-row">
+            <text class="display sec-title">他们的镜头</text>
+            <text class="display display-italic sec-title-it">今日心事</text>
+          </view>
+        </view>
+        <text class="eyebrow sec-count">{{displayWorks.length}} 件作品</text>
+      </view>
+
+      <view class="waterfall">
+        <view class="wf-col">
+          <view class="work-card tap" wx:for="{{leftWorks}}" wx:key="id" wx:for-item="work" bindtap="onWorkTap" data-item="{{work}}">
+            <view class="work-cover ratio-{{work.ratioClass}}">
+              <image wx:if="{{work.cover}}" class="work-img" src="{{work.cover}}" mode="aspectFill" lazy-load />
+              <view wx:else class="work-img ph ph-fog"/>
+              <view class="ai-corner">AI</view>
+            </view>
+            <view class="work-meta">
+              <text class="work-title">{{work.title || '未命名作品'}}</text>
+              <view class="work-sub">
+                <text class="work-by">{{work.by}}</text>
+                <text class="work-like">❤ {{work.likes || 0}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="wf-col">
+          <view class="work-card tap" wx:for="{{rightWorks}}" wx:key="id" wx:for-item="work" bindtap="onWorkTap" data-item="{{work}}">
+            <view class="work-cover ratio-{{work.ratioClass}}">
+              <image wx:if="{{work.cover}}" class="work-img" src="{{work.cover}}" mode="aspectFill" lazy-load />
+              <view wx:else class="work-img ph ph-fog"/>
+              <view class="ai-corner">AI</view>
+            </view>
+            <view class="work-meta">
+              <text class="work-title">{{work.title || '未命名作品'}}</text>
+              <view class="work-sub">
+                <text class="work-by">{{work.by}}</text>
+                <text class="work-like">❤ {{work.likes || 0}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="loading-row" wx:if="{{loading}}">
+      <view class="spinner"/>
+    </view>
+
+    <view class="empty-state" wx:if="{{empty && !loading}}">
+      <text class="empty-text">还没有作品</text>
+      <text class="empty-hint">上传第一张，点亮这个分类</text>
+    </view>
+
+    <view class="dock-spacer"/>
+  </scroll-view>
+</view>
+
+<privacy-popup/>

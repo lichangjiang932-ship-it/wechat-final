@@ -1,0 +1,101 @@
+<!-- Preview · Image detail dark -->
+<view class="page {{themeClass}}">
+
+  <!-- Nav bar -->
+  <view class="nav" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner" style="min-height: 44px;">
+      <view class="nav-back tap" bindtap="goBack">
+        <view class="ic ic-back nav-back-icon"/>
+      </view>
+      <text class="label-mono nav-title">PREVIEW</text>
+      <view class="nav-actions">
+        <view class="nav-action tap" bindtap="onMore">
+          <view class="ic ic-more" style="background-color: var(--cream-3); width:32rpx; height:32rpx;"/>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Image area -->
+  <scroll-view scroll-y class="image-scroll" style="padding-top: {{navBarHeight}}px;">
+    <view class="image-wrap">
+      <image wx:if="{{imageUrl}}" class="preview-img" src="{{imageUrl}}" mode="widthFix"
+             bindtap="onImageTap" bindload="onImageLoad" binderror="onImageError"/>
+      <!-- AI 生成显著标识（合规要求） -->
+      <view class="ai-tag" wx:if="{{imageUrl}}">
+        <text class="ai-tag-l">AI</text>
+        <text class="ai-tag-t">人工智能生成</text>
+      </view>
+      <view class="image-ph" wx:else>
+        <view class="spinner"/>
+      </view>
+      <view class="image-loading" wx:if="{{imageUrl && !imageLoaded}}">
+        <view class="spinner"/>
+      </view>
+    </view>
+
+    <!-- AI 生成内容免责说明 -->
+    <view class="ai-disclaimer" wx:if="{{imageUrl}}">
+      <text class="ai-disclaimer-t">本图片为 AI 生成 · 内容由人工智能合成，仅供参考，不代表真实事件或人物</text>
+    </view>
+
+    <!-- Info section -->
+    <view class="info-section" wx:if="{{title || prompt}}">
+      <view class="info-header">
+        <text class="display info-title">{{title || '作品'}}</text>
+        <view class="info-meta" wx:if="{{style || createdAt}}">
+          <text class="label-mono info-meta-item" wx:if="{{style}}">{{style}}</text>
+          <text class="label-mono info-meta-item" wx:if="{{createdAt}}">{{createdAt}}</text>
+        </view>
+      </view>
+      <view class="info-prompt" wx:if="{{prompt}}" bindtap="onCopyPrompt">
+        <text class="body info-prompt-text">{{prompt}}</text>
+        <text class="label-mono info-prompt-copy">COPY</text>
+      </view>
+    </view>
+
+    <view class="safe-bottom"/>
+  </scroll-view>
+
+  <!-- Bottom action bar -->
+  <view class="action-bar">
+    <view class="action-left">
+      <view class="action-btn tap" bindtap="onLike">
+        <view class="ic ic-heart {{isLiked ? 'active' : ''}}" style="background-color: {{isLiked ? 'var(--ember)' : 'var(--cream-3)'}}; width:36rpx; height:36rpx;"/>
+        <text class="label-mono action-count">{{saves}}</text>
+      </view>
+      <view class="action-btn tap" bindtap="onFavorite">
+        <view class="ic ic-bookmark {{isFavorite ? 'active' : ''}}" style="background-color: {{isFavorite ? 'var(--ember)' : 'var(--cream-3)'}}; width:36rpx; height:36rpx;"/>
+      </view>
+      <view class="action-btn tap" bindtap="onSaveToAlbum">
+        <view class="ic ic-download" style="background-color: var(--cream-3); width:36rpx; height:36rpx;"/>
+      </view>
+    </view>
+    <view class="action-right">
+      <view class="btn-primary tap" bindtap="onMakeSame">
+        <text class="btn-primary-text">做同款</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Share menu -->
+  <view class="popup-mask {{showShareMenu ? '' : 'hidden'}}" bindtap="closeShareMenu"/>
+  <view class="popup-sheet {{showShareMenu ? 'show' : ''}}">
+    <view class="popup-handle"/>
+    <text class="display popup-title">分享作品</text>
+    <view class="share-options">
+      <button class="share-btn tap" open-type="share" bindtap="closeShareMenu">
+        <view class="share-icon-wrap">
+          <view class="ic ic-share" style="background-color: var(--cream-1); width:40rpx; height:40rpx;"/>
+        </view>
+        <text class="label-mono share-label">发送</text>
+      </button>
+      <view class="share-btn tap" bindtap="onSaveToAlbum">
+        <view class="share-icon-wrap">
+          <view class="ic ic-download" style="background-color: var(--cream-1); width:40rpx; height:40rpx;"/>
+        </view>
+        <text class="label-mono share-label">保存</text>
+      </view>
+    </view>
+  </view>
+</view>

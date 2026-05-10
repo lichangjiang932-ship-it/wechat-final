@@ -1,0 +1,117 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/create/create",
+    "pages/discover/discover",
+    "pages/my/my",
+    "pages/favorites/favorites",
+    "pages/likes/likes",
+    "pages/upload/upload"
+  ],
+  "subpackages": [
+    {
+      "root": "subpackages/preview",
+      "name": "preview",
+      "pages": [
+        "pages/preview/preview"
+      ]
+    },
+    {
+      "root": "subpackages/settings",
+      "name": "settings",
+      "pages": [
+        "pages/settings/settings"
+      ]
+    },
+    {
+      "root": "subpackages/history",
+      "name": "history",
+      "pages": [
+        "pages/history/history"
+      ]
+    },
+    {
+      "root": "subpackages/member",
+      "name": "member",
+      "pages": [
+        "pages/member/member"
+      ]
+    },
+    {
+      "root": "subpackages/poster",
+      "name": "poster",
+      "pages": [
+        "pages/poster/poster"
+      ]
+    },
+    {
+      "root": "subpackages/policy",
+      "name": "policy",
+      "pages": [
+        "pages/privacy/privacy",
+        "pages/terms/terms"
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/my/my": {
+      "network": "all",
+      "packages": [
+        "preview",
+        "settings",
+        "history",
+        "member",
+        "poster"
+      ]
+    },
+    "pages/discover/discover": {
+      "network": "all",
+      "packages": [
+        "preview"
+      ]
+    },
+    "pages/index/index": {
+      "network": "all",
+      "packages": [
+        "preview"
+      ]
+    }
+  },
+  "window": {
+    "backgroundTextStyle": "dark",
+    "navigationStyle": "custom",
+    "backgroundColor": "#0A0806"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#8A8072",
+    "selectedColor": "#FDFBF5",
+    "backgroundColor": "#0E0B08",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "Home"
+      },
+      {
+        "pagePath": "pages/discover/discover",
+        "text": "Gallery"
+      },
+      {
+        "pagePath": "pages/create/create",
+        "text": "Create"
+      },
+      {
+        "pagePath": "pages/favorites/favorites",
+        "text": "Library"
+      },
+      {
+        "pagePath": "pages/my/my",
+        "text": "Me"
+      }
+    ]
+  },
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json",
+  "__usePrivacyCheck__": true
+}
